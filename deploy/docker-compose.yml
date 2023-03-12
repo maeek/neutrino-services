@@ -1,0 +1,88 @@
+version: '3'
+
+services:
+  gateway:
+    build:
+      context: ../production/gateway
+      dockerfile: Dockerfile
+    hostname: gateway
+    ports:
+      - "8080:8080"
+      # - "443:443"
+    volumes:
+      - ../production/broker/config/certs:/certs:ro
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Warsaw
+      API_PORT: 8080
+      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
+    env_file:
+      - ../.env
+    depends_on:
+      - admin
+
+  admin:
+    build:
+      context: ../production/admin
+      dockerfile: Dockerfile
+    hostname: admin
+    # ports:
+      # - "80:80"
+      # - "443:443"
+    volumes:
+      - ../production/broker/config/certs:/certs:ro
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Warsaw
+      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
+    env_file:
+      - ../.env
+    # depends_on:
+    #   - serviceName
+
+  auth:
+    build:
+      context: ../production/auth
+      dockerfile: Dockerfile
+    hostname: admin
+    # ports:
+      # - "80:80"
+      # - "443:443"
+    volumes:
+      - ../production/broker/config/certs:/certs:ro
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Warsaw
+      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
+    env_file:
+      - ../.env
+    # depends_on:
+    #   - serviceName
+
+  rabbitmq:
+    build: 
+      context: ../production/broker
+      dockerfile: Dockerfile
+    hostname: rabbitmq
+    user: 0:0
+    environment:
+      RABBITMQ_USER: 'test'
+      RABBITMQ_PASSWORD: 'test'
+      TZ: Europe/Warsaw
+    ports:
+      - "5672:5672" # AMQP
+      - "5671:5671" # AMQP over TLS
+      - "15672:15672"
+    volumes:
+      - ../production/broker/config:/etc/rabbitmq/:rw
+      - ../data/broker/logs:/var/log/rabbitmq:rw
+      - ../data/broker/data:/var/lib/rabbitmq:rw
+    env_file:
+      - ../.env
+
+
+networks:
+  backend:
