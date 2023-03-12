@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'admin.getHealth',
@@ -16,10 +16,9 @@ export class AdminService {
   async getHealth() {
     try {
       const { status } = await firstValueFrom(
-        this.adminServiceClient.send<{ status: 'ok' }>(
-          MESSAGE_PATTERNS.GET_HEALTH,
-          {},
-        ),
+        this.adminServiceClient
+          .send<{ status: 'ok' }>(MESSAGE_PATTERNS.GET_HEALTH, {})
+          .pipe(timeout(5000)),
       );
 
       return {
