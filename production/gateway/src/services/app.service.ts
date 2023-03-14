@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class AppService {
   async getHealth() {
     return {
+      name: 'gateway',
       status: 'ok',
     };
   }

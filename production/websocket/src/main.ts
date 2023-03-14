@@ -1,8 +1,28 @@
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { RmqOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
+import { RedisIoAdapter } from './redis-io';
+import { ConfigService } from './services/config/config.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  await app.listen(3000);
+  const configService = new ConfigService();
+  const app = await NestFactory.createMicroservice(AppModule, {
+    transport: Transport.RMQ,
+    options: {
+      urls: [configService.get('RABBITMQ_URL')],
+      queue: configService.get('RABBITMQ_QUEUE'),
+      persist: true,
+      queueOptions: {
+        durable: false,
+      },
+    },
+  } as RmqOptions);
+  const redisIoAdapter = new RedisIoAdapter(app);
+  await redisIoAdapter.connectToRedis();
+
+  app.useWebSocketAdapter(redisIoAdapter);
+  app.useLogger(Logger);
+  await app.listen();
 }
 bootstrap();

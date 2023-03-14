@@ -13,16 +13,17 @@ export class AppController {
 
   @Get('/health')
   async getHealth() {
-    const gatewayHealth = await this.appService.getHealth();
-    const adminHealth = await this.adminService.getHealth();
-    const authHealth = await this.authService.getHealth();
+    const statuses = await Promise.all([
+      this.appService.getHealth(),
+      this.adminService.getHealth(),
+      this.authService.getHealth(),
+    ]);
 
     return {
-      services: [
-        { name: 'gateway', status: gatewayHealth.status },
-        { service: 'admin', status: adminHealth.status },
-        { service: 'auth', status: authHealth.status },
-      ],
+      status: statuses.every(({ status }) => status === 'ok')
+        ? 'ok'
+        : 'unhealthy',
+      services: statuses,
     };
   }
 }

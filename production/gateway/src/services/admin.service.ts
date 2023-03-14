@@ -15,19 +15,26 @@ export class AdminService {
 
   async getHealth() {
     try {
-      const { status } = await firstValueFrom(
+      const { status, message } = await firstValueFrom(
         this.adminServiceClient
-          .send<{ status: 'ok' }>(MESSAGE_PATTERNS.GET_HEALTH, {})
+          .send<{ status: 'ok' | 'unhealthy'; message: string }>(
+            MESSAGE_PATTERNS.GET_HEALTH,
+            {},
+          )
           .pipe(timeout(5000)),
       );
 
       return {
+        name: 'admin',
         status,
+        message,
       };
     } catch (error) {
       console.error(error);
       return {
-        status: 'down',
+        name: 'admin',
+        status: 'unhealthy',
+        reason: error.message,
       };
     }
   }

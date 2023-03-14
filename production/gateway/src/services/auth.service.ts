@@ -15,20 +15,26 @@ export class AuthService {
 
   async getHealth() {
     try {
-      const { status } = await firstValueFrom(
+      const { status, message } = await firstValueFrom(
         this.authServiceClient
-          .send<{ status: 'ok' }>(MESSAGE_PATTERNS.GET_HEALTH, {})
+          .send<{ status: 'ok' | 'unhealthy'; message: string }>(
+            MESSAGE_PATTERNS.GET_HEALTH,
+            {},
+          )
           .pipe(timeout(5000)),
-        { defaultValue: { status: 'down' } },
       );
 
       return {
+        name: 'auth',
         status,
+        message,
       };
     } catch (error) {
       console.error(error);
       return {
-        status: 'down',
+        name: 'auth',
+        status: 'unhealthy',
+        reason: error.message,
       };
     }
   }
