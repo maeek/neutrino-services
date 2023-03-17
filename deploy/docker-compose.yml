@@ -21,6 +21,30 @@ services:
       - ../.env
     depends_on:
       - admin
+      - auth
+      - rabbitmq
+
+  websocket:
+    build:
+      context: ../production/websocket
+      dockerfile: Dockerfile
+    hostname: websocket
+    ports:
+      - "8081:8081"
+      # - "443:443"
+    volumes:
+      - ../production/broker/config/certs:/certs:ro
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Warsaw
+      API_PORT: 8081
+      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
+    env_file:
+      - ../.env
+    depends_on:
+      - redis
+      - rabbitmq
 
   admin:
     build:
@@ -39,8 +63,8 @@ services:
       RABBITMQ_URL: amqp://test:test@rabbitmq:5672
     env_file:
       - ../.env
-    # depends_on:
-    #   - serviceName
+    depends_on:
+      - rabbitmq
 
   auth:
     build:
@@ -59,8 +83,8 @@ services:
       RABBITMQ_URL: amqp://test:test@rabbitmq:5672
     env_file:
       - ../.env
-    # depends_on:
-    #   - serviceName
+    depends_on:
+      - rabbitmq
 
   rabbitmq:
     build: 
@@ -80,6 +104,12 @@ services:
       - ../production/broker/config:/etc/rabbitmq/:rw
       - ../data/broker/logs:/var/log/rabbitmq:rw
       - ../data/broker/data:/var/lib/rabbitmq:rw
+    env_file:
+      - ../.env
+
+  redis:
+    image: redis
+    hostname: redis
     env_file:
       - ../.env
 

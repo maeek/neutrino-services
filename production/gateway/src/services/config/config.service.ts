@@ -6,6 +6,7 @@ export class ConfigService {
   private readonly RMQ_QUEUES = {
     RABBITMQ_ADMIN_QUEUE: 'admin',
     RABBITMQ_AUTH_QUEUE: 'auth',
+    RABBITMQ_WEBSOCKET_QUEUE: 'websocket',
   };
 
   private readonly CONFIG_DEFAULTS = {
@@ -48,6 +49,21 @@ export class ConfigService {
       },
       transport: Transport.RMQ,
     };
+
+    this.envConfig.websocketService = {
+      options: {
+        urls: [this.getValueFromEnv('RABBITMQ_URL')],
+        queue: this.getValueFromEnv('RABBITMQ_WEBSOCKET_QUEUE'),
+        noAck: false,
+        queueOptions: {
+          durable: this.getValueFromEnv('RABBITMQ_SURVIVE_RESTART'),
+        },
+        headers: {
+          'x-client-type': 'gateway',
+        },
+      },
+      transport: Transport.RMQ,
+    };
   }
 
   private getValueFromEnv(key: string): any {
@@ -55,6 +71,6 @@ export class ConfigService {
   }
 
   get(key: string): any {
-    return this.envConfig[key];
+    return this.envConfig[key] || process.env[key];
   }
 }
