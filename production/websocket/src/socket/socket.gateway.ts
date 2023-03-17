@@ -7,14 +7,12 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
-// import { ConfigService } from '../services/config/config.service';
-// const configService = new ConfigService();
-// {
-//   namespace: 'websocket',
-//   path: '/websocket',
-// }
-
-@WebSocketGateway({ cors: { origin: ['http://localhost:8081'] } })
+@WebSocketGateway({
+  path: '/messaging',
+  maxHttpBufferSize: 1e7, // 10MB
+  serveClient: false,
+  transports: ['websocket'],
+})
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   private server: Server;
