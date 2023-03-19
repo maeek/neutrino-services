@@ -3,23 +3,23 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
 
 enum MESSAGE_PATTERNS {
-  GET_HEALTH = 'websocket.getHealth',
+  GET_HEALTH = 'user.getHealth',
 }
 
 @Injectable()
-export class WebsocketService {
+export class UserService {
   constructor(
-    @Inject('WEBSOCKET_SERVICE')
-    private readonly adminServiceClient: ClientProxy,
+    @Inject('USER_SERVICE')
+    private readonly userServiceClient: ClientProxy,
     private readonly logger: Logger,
   ) {}
 
   async getHealth() {
     try {
-      this.logger.debug('Sending health check to websocket service');
+      this.logger.debug('Sending health check to user service');
 
       const { status, message } = await firstValueFrom(
-        this.adminServiceClient
+        this.userServiceClient
           .send<{ status: 'ok' | 'unhealthy'; message: string }>(
             MESSAGE_PATTERNS.GET_HEALTH,
             {},
@@ -28,20 +28,20 @@ export class WebsocketService {
       );
 
       this.logger.debug(
-        'Received health check from websocket service',
+        'Received health check from user service',
         status,
         message,
       );
 
       return {
-        name: 'websocket',
+        name: 'user',
         status,
         message,
       };
     } catch (error) {
       this.logger.error(error);
       return {
-        name: 'websocket',
+        name: 'user',
         status: 'unhealthy',
         reason: error.message,
       };

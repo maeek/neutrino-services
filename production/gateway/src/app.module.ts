@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { AppController } from './controllers/app.controller';
 import { AdminController } from './controllers/admin.controller';
 import { AuthController } from './controllers/auth.controller';
@@ -10,6 +10,7 @@ import { AdminService } from './services/admin.service';
 import { AuthService } from './services/auth.service';
 import { WebsocketService } from './services/websocket.service';
 import { WebsocketController } from './controllers/websocket.controller';
+import { UserService } from './services/user.service';
 
 @Module({
   imports: [],
@@ -25,7 +26,9 @@ import { WebsocketController } from './controllers/websocket.controller';
     AppService,
     AdminService,
     AuthService,
+    UserService,
     WebsocketService,
+    Logger,
     {
       provide: 'ADMIN_SERVICE',
       useFactory: (configService: ConfigService) => {
@@ -46,6 +49,14 @@ import { WebsocketController } from './controllers/websocket.controller';
       provide: 'WEBSOCKET_SERVICE',
       useFactory: (configService: ConfigService) => {
         const tokenServiceOptions = configService.get('websocketService');
+        return ClientProxyFactory.create(tokenServiceOptions);
+      },
+      inject: [ConfigService],
+    },
+    {
+      provide: 'USER_SERVICE',
+      useFactory: (configService: ConfigService) => {
+        const tokenServiceOptions = configService.get('userService');
         return ClientProxyFactory.create(tokenServiceOptions);
       },
       inject: [ConfigService],

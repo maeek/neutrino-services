@@ -4,9 +4,12 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AppModule } from './app.module';
 import { ConfigService } from './services/config/config.service';
+import { Logger } from '@nestjs/common';
+import * as compression from 'compression';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   const options = new DocumentBuilder()
     .setTitle('API docs')
     .setVersion(process.env.BUILD_VER || '1.0')
@@ -19,10 +22,11 @@ async function bootstrap() {
     next();
   });
   app.use(helmet());
+  app.use(compression());
+
+  app.useLogger(Logger);
+
   const configService = new ConfigService();
-
-  console.log(configService);
-
   await app.listen(configService.get('API_PORT'));
 }
 

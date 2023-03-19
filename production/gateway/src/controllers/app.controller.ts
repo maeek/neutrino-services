@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { AuthService } from 'src/services/auth.service';
+import { UserService } from 'src/services/user.service';
 import { WebsocketService } from 'src/services/websocket.service';
 import { AdminService } from '../services/admin.service';
 import { AppService } from '../services/app.service';
@@ -10,6 +11,7 @@ export class AppController {
     private readonly appService: AppService,
     private readonly adminService: AdminService,
     private readonly authService: AuthService,
+    private readonly userService: UserService,
     private readonly websocketService: WebsocketService,
   ) {}
 
@@ -19,6 +21,7 @@ export class AppController {
       this.appService.getHealth(),
       this.adminService.getHealth(),
       this.authService.getHealth(),
+      this.userService.getHealth(),
       this.websocketService.getHealth(),
     ]);
 

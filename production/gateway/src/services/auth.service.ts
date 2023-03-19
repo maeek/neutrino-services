@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
 
@@ -11,10 +11,13 @@ export class AuthService {
   constructor(
     @Inject('AUTH_SERVICE')
     private readonly authServiceClient: ClientProxy,
+    private readonly logger: Logger,
   ) {}
 
   async getHealth() {
     try {
+      this.logger.debug('Sending health check to auth service');
+
       const { status, message } = await firstValueFrom(
         this.authServiceClient
           .send<{ status: 'ok' | 'unhealthy'; message: string }>(
@@ -24,13 +27,19 @@ export class AuthService {
           .pipe(timeout(5000)),
       );
 
+      this.logger.debug(
+        'Received health check from auth service',
+        status,
+        message,
+      );
+
       return {
         name: 'auth',
         status,
         message,
       };
     } catch (error) {
-      console.error(error);
+      this.logger.error(error);
       return {
         name: 'auth',
         status: 'unhealthy',

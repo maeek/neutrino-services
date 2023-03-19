@@ -4,13 +4,13 @@ services:
   gateway:
     build:
       context: ../production/gateway
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     hostname: gateway
+    volumes:
+      - ../production/gateway:/app
+      - ../production/broker/config/certs:/certs:ro
     ports:
       - "8080:8080"
-      # - "443:443"
-    volumes:
-      - ../production/broker/config/certs:/certs:ro
     environment:
       PUID: 1000
       PGID: 1000
@@ -20,61 +20,15 @@ services:
     env_file:
       - ../.env
     depends_on:
-      - admin
-      - auth
-      - rabbitmq
-
-  websocket:
-    build:
-      context: ../production/websocket
-      dockerfile: Dockerfile
-    hostname: websocket
-    ports:
-      - "8081:8081"
-      # - "443:443"
-    volumes:
-      - ../production/broker/config/certs:/certs:ro
-    environment:
-      PUID: 1000
-      PGID: 1000
-      TZ: Europe/Warsaw
-      API_PORT: 8081
-      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
-    env_file:
-      - ../.env
-    depends_on:
-      - redis
-      - rabbitmq
-
-  admin:
-    build:
-      context: ../production/admin
-      dockerfile: Dockerfile
-    hostname: admin
-    # ports:
-      # - "80:80"
-      # - "443:443"
-    volumes:
-      - ../production/broker/config/certs:/certs:ro
-    environment:
-      PUID: 1000
-      PGID: 1000
-      TZ: Europe/Warsaw
-      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
-    env_file:
-      - ../.env
-    depends_on:
       - rabbitmq
 
   auth:
     build:
       context: ../production/auth
-      dockerfile: Dockerfile
-    hostname: admin
-    # ports:
-      # - "80:80"
-      # - "443:443"
+      dockerfile: Dockerfile.dev
+    hostname: auth
     volumes:
+      - ../production/auth:/app
       - ../production/broker/config/certs:/certs:ro
     environment:
       PUID: 1000
@@ -89,12 +43,49 @@ services:
   user:
     build:
       context: ../production/user
-      dockerfile: Dockerfile
-    hostname: admin
-    # ports:
-      # - "80:80"
-      # - "443:443"
+      dockerfile: Dockerfile.dev
+    hostname: user
     volumes:
+      - ../production/user:/app
+      - ../production/broker/config/certs:/certs:ro
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Warsaw
+      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
+    env_file:
+      - ../.env
+    depends_on:
+      - rabbitmq
+
+  websocket:
+    build:
+      context: ../production/websocket
+      dockerfile: Dockerfile.dev
+    hostname: websocket
+    volumes:
+      - ../production/websocket:/app
+      - ../production/broker/config/certs:/certs:ro
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Warsaw
+      API_PORT: 8081
+      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
+    ports:
+      - "8081:8081"
+    env_file:
+      - ../.env
+    depends_on:
+      - rabbitmq
+
+  admin:
+    build:
+      context: ../production/admin
+      dockerfile: Dockerfile.dev
+    hostname: admin
+    volumes:
+      - ../production/admin:/app
       - ../production/broker/config/certs:/certs:ro
     environment:
       PUID: 1000
