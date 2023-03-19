@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { AppService } from '../services/app.service';
 
@@ -18,5 +18,10 @@ export class AppController {
   @Get('/health')
   getHealthHttp() {
     return this.appService.getHealth();
+  }
+
+  @Post('/message/all')
+  async messageToAll() {
+    await this.appService.sendToAll('message', 'Hello from websocket');
   }
 }

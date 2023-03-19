@@ -21,6 +21,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // check token and disconnect if invalid
     // add socket to redis ??
     console.log('socket connected', socket.id);
+    console.log(socket.handshake);
     return socket.emit('message', 'Hello world!');
   }
 
@@ -34,5 +35,17 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleMessage(socket: Socket, payload: any) {
     console.log('message', payload);
     return 'Hello world!';
+  }
+
+  async sendToRoom(room: string, event: string, data: any) {
+    return this.server.to(room).emit(event, data);
+  }
+
+  async sendToUser(socketId: string, event: string, data: any) {
+    return this.server.to(socketId).emit(event, data);
+  }
+
+  async sendToAll(event: string, data: any) {
+    return this.server.emit(event, data);
   }
 }
