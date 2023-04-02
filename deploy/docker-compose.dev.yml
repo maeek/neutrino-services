@@ -124,6 +124,37 @@ services:
     env_file:
       - ../.env
 
+  db:
+    build:
+      context: ../production/database
+      dockerfile: Dockerfile.development
+    restart: always
+    hostname: db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+      MONGO_USER: ${MONGO_USER}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      TZ: "Europe/Warsaw"
+    volumes:
+      - ../production/database/init/:/docker-entrypoint-initdb.d/
+    env_file:
+      - ../.env
+    ports:
+      - 27017:27017
 
-networks:
-  backend:
+  mongo-express:
+    image: mongo-express
+    hostname: mongo-express
+    environment:
+      ME_CONFIG_MONGODB_URL: ${MOGNO_ROOT_DSN}
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USER}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD}
+    env_file:
+      - ../.env
+    ports:
+      - 8088:8081
+    restart: unless-stopped
+    depends_on:
+      - db

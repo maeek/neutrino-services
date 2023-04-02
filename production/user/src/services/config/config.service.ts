@@ -8,6 +8,7 @@ export class ConfigService {
   private readonly CONFIG_DEFAULTS = {
     RABBITMQ_URL: 'amqp://test:test@rabbitmq:5671',
     RABBITMQ_SURVIVE_RESTART: false,
+    SALT_ROUNDS: 10,
     ...this.RMQ_QUEUES,
   };
 
@@ -18,6 +19,7 @@ export class ConfigService {
         'RABBITMQ_SURVIVE_RESTART',
       ),
       RABBITMQ_QUEUE: this.getValueFromEnv('RABBITMQ_QUEUE'),
+      SALT_ROUNDS: this.getValueFromEnv('SALT_ROUNDS'),
     };
   }
 

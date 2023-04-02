@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { Response } from 'express';
 import { AppModule } from './app.module';
 import { ConfigService } from './services/config/config.service';
 import { Logger } from '@nestjs/common';
@@ -17,11 +16,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('api-docs', app, document);
 
-  app.use((_req, res: Response, next) => {
-    res.removeHeader('X-Powered-By');
-    next();
-  });
   app.use(helmet());
+  app.use(helmet.hidePoweredBy());
   app.use(compression());
 
   app.useLogger(Logger);
