@@ -86,10 +86,10 @@ export class User {
   hash?: string;
 
   @Prop({
-    type: MSchema.Types.ObjectId,
+    type: [{ type: MSchema.Types.ObjectId }],
     ref: 'Credential',
   })
-  credentials: MSchema.Types.ObjectId;
+  credentials: MSchema.Types.ObjectId[];
 
   @Prop({
     type: MSchema.Types.ObjectId,
