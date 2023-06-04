@@ -7,9 +7,9 @@ enum MESSAGE_PATTERNS {
 }
 
 @Injectable()
-export class WebsocketService {
+export class MessageService {
   constructor(
-    @Inject('WEBSOCKET_SERVICE')
+    @Inject('MESSAGE_SERVICE')
     private readonly adminServiceClient: ClientProxy,
     private readonly logger: Logger,
   ) {}

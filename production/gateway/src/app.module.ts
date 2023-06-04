@@ -8,8 +8,8 @@ import { ConfigService } from './services/config/config.service';
 import { ClientProxyFactory } from '@nestjs/microservices';
 import { AdminService } from './services/admin.service';
 import { AuthService } from './services/auth.service';
-import { WebsocketService } from './services/websocket.service';
-import { WebsocketController } from './controllers/websocket.controller';
+import { MessageService } from './services/message.service';
+import { MessageController } from './controllers/message.controller';
 import { UserService } from './services/user.service';
 
 @Module({
@@ -19,7 +19,7 @@ import { UserService } from './services/user.service';
     AdminController,
     AuthController,
     UserController,
-    WebsocketController,
+    MessageController,
   ],
   providers: [
     ConfigService,
@@ -27,7 +27,7 @@ import { UserService } from './services/user.service';
     AdminService,
     AuthService,
     UserService,
-    WebsocketService,
+    MessageService,
     Logger,
     {
       provide: 'ADMIN_SERVICE',
@@ -46,9 +46,9 @@ import { UserService } from './services/user.service';
       inject: [ConfigService],
     },
     {
-      provide: 'WEBSOCKET_SERVICE',
+      provide: 'MESSAGE_SERVICE',
       useFactory: (configService: ConfigService) => {
-        const tokenServiceOptions = configService.get('websocketService');
+        const tokenServiceOptions = configService.get('messageService');
         return ClientProxyFactory.create(tokenServiceOptions);
       },
       inject: [ConfigService],
