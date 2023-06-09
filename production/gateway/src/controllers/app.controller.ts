@@ -1,10 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
-import { AuthService } from 'src/services/auth.service';
-import { UserService } from 'src/services/user.service';
-import { WebsocketService } from 'src/services/message.service';
+import { AuthService } from '../services/auth.service';
+import { UserService } from '../services/user.service';
+import { MessageService } from '../services/message.service';
 import { AdminService } from '../services/admin.service';
 import { AppService } from '../services/app.service';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @Controller()
 @ApiTags('Health')
@@ -14,7 +14,7 @@ export class AppController {
     private readonly adminService: AdminService,
     private readonly authService: AuthService,
     private readonly userService: UserService,
-    private readonly websocketService: WebsocketService,
+    private readonly messageService: MessageService,
   ) {}
 
   @Get('/health')
@@ -51,7 +51,7 @@ export class AppController {
       this.adminService.getHealth(),
       this.authService.getHealth(),
       this.userService.getHealth(),
-      this.websocketService.getHealth(),
+      this.messageService.getHealth(),
     ]);
 
     return {

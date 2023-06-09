@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MSchema } from 'mongoose';
+import { Credential, CredentialSchema } from './credentials.schema';
+import { Settings, SettingsSchema } from './settings.schema';
 
 export enum UserRole {
   ROOT = 'ROOT',
@@ -37,8 +39,8 @@ export class User {
     required: [true, '"username" cannot be empty'],
     unique: true,
     index: true,
-    maxlength: 50,
-    minlength: 3,
+    maxlength: 64,
+    minlength: 2,
     lowercase: true,
     trim: true,
     validate: {
@@ -49,19 +51,11 @@ export class User {
   })
   readonly username: string;
 
-  @Prop({
-    type: String,
-    required: [true, 'User role is required'],
-    default: UserRole.USER,
-  })
+  @Prop({ type: String, default: UserRole.USER })
   role: string;
 
   @Prop({
-    type: [
-      {
-        type: String,
-      },
-    ],
+    type: [String],
     required: [true, 'Account supported type is required'],
     default: [AccountLoginType.STANDARD],
   })
@@ -70,6 +64,13 @@ export class User {
   @Prop({ type: Number, default: Date.now() })
   createdAt: number;
 
+  @Prop({
+    type: [MSchema.Types.ObjectId],
+    ref: 'Token',
+    default: [],
+  })
+  sessions: MSchema.Types.ObjectId[];
+
   @Prop({ trim: true })
   avatar: string;
 
@@ -77,7 +78,7 @@ export class User {
     trim: true,
     maxlength: 255,
   })
-  bio: string;
+  description: string;
 
   @Prop()
   locked: boolean;
@@ -85,17 +86,11 @@ export class User {
   @Prop()
   hash?: string;
 
-  @Prop({
-    type: [{ type: MSchema.Types.ObjectId }],
-    ref: 'Credential',
-  })
-  credentials: MSchema.Types.ObjectId[];
+  @Prop({ type: [CredentialSchema], default: [] })
+  credentials: Credential[];
 
-  @Prop({
-    type: MSchema.Types.ObjectId,
-    ref: 'Settings',
-  })
-  settings: MSchema.Types.ObjectId;
+  @Prop({ type: SettingsSchema })
+  settings: Settings;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

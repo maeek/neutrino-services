@@ -8,13 +8,16 @@ import * as compression from 'compression';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api');
 
   const options = new DocumentBuilder()
-    .setTitle('API docs')
+    .setTitle('Chat API Docs')
     .setVersion(process.env.BUILD_VER || '1.0')
     .build();
   const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('api-docs', app, document);
+  SwaggerModule.setup('api-docs', app, document, {
+    useGlobalPrefix: false,
+  });
 
   app.use(helmet());
   app.use(helmet.hidePoweredBy());

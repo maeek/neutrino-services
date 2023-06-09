@@ -15,11 +15,15 @@ export class UsersRepository {
     return this.userModel.exists(existsFilterQuery);
   }
 
-  findOne(userFilterQuery: FilterQuery<UserDocument>): Promise<UserDocument> {
+  async findOne(
+    userFilterQuery: FilterQuery<UserDocument>,
+  ): Promise<UserDocument> {
     return this.userModel.findOne(userFilterQuery);
   }
 
-  find(usersFilterQuery: FilterQuery<UserDocument>): Promise<UserDocument[]> {
+  async find(
+    usersFilterQuery: FilterQuery<UserDocument>,
+  ): Promise<UserDocument[]> {
     return this.userModel.find(usersFilterQuery);
   }
 
