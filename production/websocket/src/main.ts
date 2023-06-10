@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
   MicroserviceOptions,
@@ -11,7 +10,9 @@ import { ConfigService } from './services/config/config.service';
 
 async function bootstrap() {
   const configService = new ConfigService();
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'debug', 'verbose'],
+  });
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,
     options: {
@@ -27,7 +28,6 @@ async function bootstrap() {
   await redisIoAdapter.connectToRedis();
 
   app.useWebSocketAdapter(redisIoAdapter);
-  app.useLogger(Logger);
   await app.startAllMicroservices();
   await app.listen(configService.get('API_PORT'));
 }

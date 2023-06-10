@@ -86,6 +86,7 @@ services:
     hostname: admin
     volumes:
       - ../production/admin:/app
+      - ../data/admin:/config
       - ../production/broker/config/certs:/certs:ro
     environment:
       PUID: 1000

@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { RmqOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
@@ -7,6 +6,7 @@ import { ConfigService } from './services/config/config.service';
 async function bootstrap() {
   const configService = new ConfigService();
   const app = await NestFactory.createMicroservice(AppModule, {
+    logger: ['error', 'warn', 'debug', 'verbose'],
     transport: Transport.RMQ,
     options: {
       urls: [configService.get('RABBITMQ_URL')],
@@ -18,7 +18,6 @@ async function bootstrap() {
     },
   } as RmqOptions);
 
-  app.useLogger(Logger);
   await app.listen();
 }
 bootstrap();

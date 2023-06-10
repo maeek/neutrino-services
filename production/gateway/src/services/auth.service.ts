@@ -4,6 +4,13 @@ import { firstValueFrom, timeout } from 'rxjs';
 
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'auth.getHealth',
+  LOGIN = 'auth.login',
+  LOGIN_WEBAUTHN = 'auth.loginWebAuthn',
+  LOGIN_WEBAUTHN_VERIFY = 'auth.loginWebAuthnVerify',
+  GET_SESSION = 'auth.getSession',
+  GET_SESSIONS = 'auth.getSessions',
+  LOGOUT = 'auth.logout',
+  LOGOUT_SESSIONS = 'auth.logoutSessions',
 }
 
 @Injectable()

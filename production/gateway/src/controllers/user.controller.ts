@@ -1,5 +1,16 @@
-import { Controller, Delete, Get, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CreateUserDto } from 'src/interfaces/user.interface';
 import { UserService } from 'src/services/user.service';
 
 @Controller('users')
@@ -22,7 +33,7 @@ export class UserController {
   @Get('/:id')
   @ApiOperation({ summary: 'Get user by id' })
   @ApiTags('Users')
-  async getUser() {
+  async getUser(@Param('offset') page = 0, @Param('limit') limit = 50) {
     return {};
   }
 
@@ -36,8 +47,15 @@ export class UserController {
   @Post('/')
   @ApiOperation({ summary: 'Create user' })
   @ApiTags('Users')
-  async setLoggedUser() {
-    return {};
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      enableDebugMessages: true,
+      skipMissingProperties: true,
+    }),
+  )
+  async createUser(@Body() body: CreateUserDto) {
+    return this.userService.createUser(body);
   }
 
   @Put('/:id')

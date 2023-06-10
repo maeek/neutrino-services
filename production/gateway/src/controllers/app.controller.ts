@@ -4,7 +4,7 @@ import { UserService } from '../services/user.service';
 import { MessageService } from '../services/message.service';
 import { AdminService } from '../services/admin.service';
 import { AppService } from '../services/app.service';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 @Controller()
 @ApiTags('Health')

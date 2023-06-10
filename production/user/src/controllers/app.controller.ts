@@ -4,6 +4,10 @@ import { AppService } from '../services/app.service';
 
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'user.getHealth',
+  CREATE_USER = 'user.createUser',
+  GET_USER = 'user.getUser',
+  GET_USERS = 'user.getUsers',
+  GET_LOGGED_USER = 'user.getLoggedUser',
 }
 
 @Controller()
@@ -13,5 +17,12 @@ export class AppController {
   @MessagePattern(MESSAGE_PATTERNS.GET_HEALTH)
   getHealth() {
     return this.appService.getHealth();
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.CREATE_USER)
+  createUser() {
+    return {
+      aaa: 'aaa',
+    };
   }
 }
