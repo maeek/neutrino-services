@@ -1,8 +1,11 @@
+import { Transport } from '@nestjs/microservices';
+
 export class ConfigService {
   private readonly envConfig: { [key: string]: any } = null;
 
   private readonly RMQ_QUEUES = {
     RABBITMQ_QUEUE: 'websocket',
+    RABBITMQ_USER_QUEUE: 'user',
   };
 
   private readonly CONFIG_DEFAULTS = {
@@ -24,6 +27,21 @@ export class ConfigService {
       RABBITMQ_QUEUE: this.getValueFromEnv('RABBITMQ_QUEUE'),
       REDIS_HOST: this.getValueFromEnv('REDIS_HOST'),
       REDIS_PORT: this.getValueFromEnv('REDIS_PORT'),
+    };
+
+    this.envConfig.userService = {
+      options: {
+        urls: [this.getValueFromEnv('RABBITMQ_URL')],
+        queue: this.getValueFromEnv('RABBITMQ_USER_QUEUE'),
+        noAck: false,
+        queueOptions: {
+          durable: this.getValueFromEnv('RABBITMQ_SURVIVE_RESTART'),
+        },
+        headers: {
+          'x-client-type': 'websocket',
+        },
+      },
+      transport: Transport.RMQ,
     };
   }
 

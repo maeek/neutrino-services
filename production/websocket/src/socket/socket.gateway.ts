@@ -37,6 +37,10 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return 'Hello world!';
   }
 
+  async subscribeToRoom(room: string, socket: Socket) {
+    return socket.join(room);
+  }
+
   async sendToRoom(room: string, event: string, data: any) {
     return this.server.to(room).emit(event, data);
   }

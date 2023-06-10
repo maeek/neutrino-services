@@ -50,7 +50,6 @@ export class UserController {
   @UsePipes(
     new ValidationPipe({
       transform: true,
-      enableDebugMessages: true,
       skipMissingProperties: true,
     }),
   )
