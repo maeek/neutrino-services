@@ -19,29 +19,29 @@ export class AppService {
     private readonly usersRepository: UsersRepository,
   ) {}
 
-  public async getUser(params: { username: string }): Promise<User> {
+  getHealth() {
+    return { status: 'ok' };
+  }
+
+  async getUsers(offset: number, limit: number, find: string) {
+    const users = await this.usersRepository.find({
+      offset,
+      limit,
+      find,
+    });
+
+    return users;
+  }
+
+  async getUser(params: { username: string }): Promise<User> {
     return this.usersRepository.findOne(params);
   }
 
-  public async createUserWithPassword(
-    user: User & { password: string },
-  ): Promise<any> {
-    const { password, ...rest } = user;
-
-    if (await this.usersRepository.exists({ username: user.username })) {
-      throw new HttpException('User already exists', HttpStatus.CONFLICT);
-    }
-
-    const salt = await bcrypt.genSalt(this.configService.get('SALT_ROUNDS'));
-    const hash = await bcrypt.hash(password, salt);
-
-    return this.usersRepository.create({
-      hash,
-      ...rest,
-    });
+  async getLoggedUser(token: string) {
+    return {};
   }
 
-  getHealth() {
-    return { status: 'ok' };
+  async createUser() {
+    return {};
   }
 }

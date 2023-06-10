@@ -7,6 +7,9 @@ enum MESSAGE_PATTERNS {
   LOGIN = 'auth.login',
   LOGIN_WEBAUTHN = 'auth.loginWebAuthn',
   LOGIN_WEBAUTHN_VERIFY = 'auth.loginWebAuthnVerify',
+  CREATE_WEBAUTHN_OPTIONS = 'auth.createWebAuthnOptions',
+  GET_CHALLENGE = 'auth.getChallenge',
+  SOLVE_CHALLENGE = 'auth.solveChallenge',
   GET_SESSION = 'auth.getSession',
   GET_SESSIONS = 'auth.getSessions',
   LOGOUT = 'auth.logout',
@@ -39,21 +42,36 @@ export class AppController {
 
   @MessagePattern(MESSAGE_PATTERNS.GET_SESSION)
   getSession() {
-    return this.appService.getSession();
+    return this.appService.getSession('');
   }
 
   @MessagePattern(MESSAGE_PATTERNS.GET_SESSIONS)
   getSessions() {
-    return this.appService.getSessions();
+    return this.appService.getSessions('');
   }
 
   @MessagePattern(MESSAGE_PATTERNS.LOGOUT)
   logout() {
-    return this.appService.logout();
+    return this.appService.logout('');
   }
 
   @MessagePattern(MESSAGE_PATTERNS.LOGOUT_SESSIONS)
   logoutSessions() {
-    return this.appService.logoutSessions();
+    return this.appService.logoutSessions('', []);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.CREATE_WEBAUTHN_OPTIONS)
+  createWebAuthnOptions() {
+    return this.appService.createWebAuthnOptions();
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.GET_CHALLENGE)
+  getChallenge() {
+    return this.appService.getChallenge();
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.SOLVE_CHALLENGE)
+  solveChallenge() {
+    return this.appService.solveChallenge();
   }
 }

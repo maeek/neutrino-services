@@ -1,16 +1,20 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
   Param,
   Post,
   Put,
+  Query,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CreateUserDto } from 'src/interfaces/user.interface';
+import { CreateUserDto, UsersResponseDto } from 'src/interfaces/user.interface';
+import { PaginationParams } from 'src/interfaces/validators/pagination';
 import { UserService } from 'src/services/user.service';
 
 @Controller('users')
@@ -26,8 +30,19 @@ export class UserController {
   @Get('/')
   @ApiOperation({ summary: 'Browse users' })
   @ApiTags('Users')
-  async getUsers() {
-    return {};
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getUsers(@Query() query: PaginationParams) {
+    const users = await this.userService.getUsers(
+      query.offset,
+      query.limit,
+      query.find,
+    );
+
+    return {
+      items: users.map((user) => new UsersResponseDto(user)),
+      total: users.length,
+    };
   }
 
   @Get('/:id')

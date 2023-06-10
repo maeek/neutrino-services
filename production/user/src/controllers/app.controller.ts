@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Body, Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { AppService } from '../services/app.service';
 
@@ -21,8 +21,21 @@ export class AppController {
 
   @MessagePattern(MESSAGE_PATTERNS.CREATE_USER)
   createUser() {
-    return {
-      aaa: 'aaa',
-    };
+    return this.appService.createUser();
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.GET_USERS)
+  async getUsers(@Body() body: any) {
+    return this.appService.getUsers(body.offset, body.limit, body.find);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.GET_USER)
+  async getUser(@Body() body: any) {
+    return this.appService.getUser(body.id);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.GET_LOGGED_USER)
+  async getLoggedUser(@Body() body: any) {
+    return this.appService.getLoggedUser(body.token);
   }
 }

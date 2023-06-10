@@ -8,6 +8,10 @@ import {
 
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'user.getHealth',
+  CREATE_USER = 'user.createUser',
+  GET_USER = 'user.getUser',
+  GET_USERS = 'user.getUsers',
+  GET_LOGGED_USER = 'user.getLoggedUser',
 }
 
 @Injectable()
@@ -56,8 +60,23 @@ export class UserService {
     return {};
   }
 
-  async getUsers() {
-    return {};
+  async getUsers(offset = 0, limit = 10, find?: string) {
+    try {
+      const users = await firstValueFrom(
+        this.userServiceClient
+          .send(MESSAGE_PATTERNS.GET_USERS, {
+            offset,
+            limit,
+            find,
+          })
+          .pipe(timeout(5000)),
+      );
+
+      return users;
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
   }
 
   async getLoggedUser() {

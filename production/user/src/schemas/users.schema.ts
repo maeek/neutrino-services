@@ -69,7 +69,7 @@ export class User {
     ref: 'Token',
     default: [],
   })
-  sessions: MSchema.Types.ObjectId[];
+  sessions: string[];
 
   @Prop({ trim: true })
   avatar: string;
