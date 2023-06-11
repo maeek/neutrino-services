@@ -128,14 +128,14 @@ export class UserService {
 
   async updateUser(
     username: string,
-    userPayload: { description?: string; avatar?: File },
+    data: { description?: string; avatar?: string },
   ) {
     try {
       const user = await firstValueFrom(
         this.userServiceClient
           .send(MESSAGE_PATTERNS.UPDATE_USER, {
-            username,
-            userPayload,
+            id: username,
+            data,
           })
           .pipe(timeout(5000)),
       );

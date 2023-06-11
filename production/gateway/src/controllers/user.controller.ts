@@ -3,22 +3,26 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Delete,
+  FileTypeValidator,
   Get,
   HttpException,
   HttpStatus,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Post,
   Put,
   Query,
   Req,
   Res,
-  UploadedFiles,
+  StreamableFile,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuthGuard } from 'src/guards/jwt.guard';
@@ -135,16 +139,7 @@ export class UserController {
   @Put('/:id')
   @ApiOperation({ summary: 'Update user by id' })
   @ApiTags('Users')
-  @UseInterceptors(FilesInterceptor('file'))
-  async updateUser(
-    @Param() params: IDParams,
-    @Body() body: any,
-    @UploadedFiles() file: Express.Multer.File,
-  ) {
-    if (file) {
-      const avatar = await this.fileService.saveAvatarFile(params.id, file);
-      body.avatar = avatar.split('/').pop();
-    }
+  async updateUser(@Param() params: IDParams, @Body() body: any) {
     console.log(body);
 
     const user = await this.userService.updateUser(params.id, body);
@@ -152,6 +147,41 @@ export class UserController {
     console.log(user);
 
     return {};
+  }
+
+  @Put('/:id/avatar')
+  @ApiOperation({ summary: 'Update user by id' })
+  @ApiTags('Users')
+  @UseInterceptors(FileInterceptor('file'))
+  async updateUserAvatar(
+    @Param() params: IDParams,
+    @Res() res: Response,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({
+            fileType: new RegExp('image/.+'),
+          }),
+          // 1MB
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 1 }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    if (file) {
+      const user = await this.userService.getUser(params.id);
+      const avatar = await this.fileService.saveAvatarFile(
+        params.id,
+        user.avatar,
+        file,
+      );
+      await this.userService.updateUser(params.id, {
+        avatar: avatar.split('/').pop(),
+      });
+    }
+
+    res.status(HttpStatus.CREATED).end();
   }
 
   @Delete('/:id')
@@ -189,10 +219,17 @@ export class UserController {
     res.status(HttpStatus.NO_CONTENT).end();
   }
 
-  @Get('/avatar/:id')
+  @Get('/:id/avatar')
   @ApiOperation({ summary: 'Get user avatar by id' })
   @ApiTags('Users')
-  async getUserAvatar() {
-    return {};
+  async getUserAvatar(
+    @Param() params: IDParams,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const file = await this.fileService.getAvatarFile(params.id);
+    res.set({
+      'Content-Type': 'image/png',
+    });
+    return new StreamableFile(file);
   }
 }

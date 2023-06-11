@@ -15,6 +15,8 @@ export class ConfigService {
     RABBITMQ_URL: 'amqp://test:test@rabbitmq:5671',
     RABBITMQ_SURVIVE_RESTART: false,
     FILES_DIR: '/data/avatars',
+    REDIS_HOST: 'redis',
+    REDIS_PORT: 6379,
     ...this.RMQ_QUEUES,
   };
 
@@ -22,6 +24,8 @@ export class ConfigService {
     this.envConfig = {
       FILES_DIR: this.getValueFromEnv('FILES_DIR'),
       API_PORT: this.getValueFromEnv('API_PORT'),
+      REDIS_HOST: this.getValueFromEnv('REDIS_HOST'),
+      REDIS_PORT: this.getValueFromEnv('REDIS_PORT'),
     };
 
     this.envConfig.adminService = {
