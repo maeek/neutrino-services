@@ -25,13 +25,14 @@ export class FileService implements OnModuleInit {
   async compressImage(file: Express.Multer.File) {
     try {
       return sharp(file.buffer)
-        .resize(500, 500, {
+        .resize(400, 400, {
           fit: 'cover',
           position: 'north',
+          withoutEnlargement: true,
         })
         .png({
           compressionLevel: 9,
-          quality: 80,
+          quality: 50,
           palette: true,
           force: true,
         })
