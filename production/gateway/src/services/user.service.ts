@@ -1,6 +1,7 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
+import { StandardErrorResponse } from 'src/interfaces/error.interface';
 import {
   CreateUserDto,
   CreateUserResponseDto,
@@ -12,6 +13,7 @@ enum MESSAGE_PATTERNS {
   GET_USER = 'user.getUser',
   GET_USERS = 'user.getUsers',
   GET_LOGGED_USER = 'user.getLoggedUser',
+  REMOVE_USER = 'user.removeUser',
 }
 
 @Injectable()
@@ -57,7 +59,27 @@ export class UserService {
   }
 
   async getUser(id: string) {
-    return {};
+    try {
+      const user = await firstValueFrom(
+        this.userServiceClient
+          .send(MESSAGE_PATTERNS.GET_USER, {
+            id,
+          })
+          .pipe(timeout(5000)),
+      );
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      return user;
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        error: error.message,
+      };
+    }
   }
 
   async getUsers(offset = 0, limit = 10, find?: string) {
@@ -75,7 +97,10 @@ export class UserService {
       return users;
     } catch (error) {
       this.logger.error(error);
-      throw error;
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        error: error.message,
+      };
     }
   }
 
@@ -83,7 +108,9 @@ export class UserService {
     return {};
   }
 
-  async createUser(userPayload: CreateUserDto): Promise<CreateUserResponseDto> {
+  async createUser(
+    userPayload: CreateUserDto,
+  ): Promise<CreateUserResponseDto | StandardErrorResponse> {
     try {
       const user = await firstValueFrom(
         this.userServiceClient
@@ -94,7 +121,10 @@ export class UserService {
       return user;
     } catch (error) {
       this.logger.error(error);
-      throw error;
+      return {
+        statusCode: HttpStatus.FORBIDDEN,
+        error: error.message,
+      };
     }
   }
 
@@ -102,7 +132,27 @@ export class UserService {
     return {};
   }
 
-  async removeUser() {
-    return {};
+  async removeUser(id: string) {
+    try {
+      const user = await firstValueFrom(
+        this.userServiceClient
+          .send(MESSAGE_PATTERNS.REMOVE_USER, {
+            id,
+          })
+          .pipe(timeout(5000)),
+      );
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      return user;
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        error: error.message,
+      };
+    }
   }
 }

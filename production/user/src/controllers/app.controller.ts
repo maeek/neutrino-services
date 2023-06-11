@@ -1,13 +1,22 @@
-import { Body, Controller } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpStatus,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { AppService } from '../services/app.service';
+import { CreateUserRequestDto } from 'src/interfaces/create-user.interface';
 
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'user.getHealth',
   CREATE_USER = 'user.createUser',
   GET_USER = 'user.getUser',
+  GET_USER_WITH_PASSWORD = 'user.getUserWithPassword',
   GET_USERS = 'user.getUsers',
   GET_LOGGED_USER = 'user.getLoggedUser',
+  REMOVE_USER = 'user.removeUser',
 }
 
 @Controller()
@@ -20,8 +29,24 @@ export class AppController {
   }
 
   @MessagePattern(MESSAGE_PATTERNS.CREATE_USER)
-  createUser() {
-    return this.appService.createUser();
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      enableDebugMessages: true,
+    }),
+  )
+  async createUser(@Body() body: CreateUserRequestDto) {
+    try {
+      const user = await this.appService.createUser(body);
+
+      return user;
+    } catch (error) {
+      return {
+        statusCode: HttpStatus.FORBIDDEN,
+        error: error.message,
+      };
+    }
   }
 
   @MessagePattern(MESSAGE_PATTERNS.GET_USERS)
@@ -37,5 +62,15 @@ export class AppController {
   @MessagePattern(MESSAGE_PATTERNS.GET_LOGGED_USER)
   async getLoggedUser(@Body() body: any) {
     return this.appService.getLoggedUser(body.token);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.REMOVE_USER)
+  async removeUser(@Body() body: { id: string }) {
+    return this.appService.removeUser(body.id);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.GET_USER_WITH_PASSWORD)
+  async getUserWithPassword(@Body() body: any) {
+    return this.appService.getUserWithPassword(body.username, body.password);
   }
 }

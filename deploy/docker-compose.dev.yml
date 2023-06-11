@@ -30,6 +30,7 @@ services:
     volumes:
       - ../production/auth:/app
       - ../production/broker/config/certs:/certs:ro
+      - ../data/auth:/config
     environment:
       PUID: 1000
       PGID: 1000
@@ -140,6 +141,7 @@ services:
       TZ: "Europe/Warsaw"
     volumes:
       - ../production/database/init/:/docker-entrypoint-initdb.d/
+      - ../data/database:/data/db
     env_file:
       - ../.env
     ports:

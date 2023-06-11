@@ -23,8 +23,17 @@ export class UsersRepository {
 
   async find(
     usersFilterQuery: FilterQuery<UserDocument>,
+    offset: number,
+    limit: number,
   ): Promise<UserDocument[]> {
-    return this.userModel.find(usersFilterQuery);
+    return this.userModel.find(
+      usersFilterQuery,
+      {},
+      {
+        skip: offset,
+        limit,
+      },
+    );
   }
 
   async create(user: Partial<User>) {

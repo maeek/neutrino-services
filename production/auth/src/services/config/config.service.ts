@@ -1,4 +1,7 @@
+import { JwtModuleOptions } from '@nestjs/jwt';
 import { Transport } from '@nestjs/microservices';
+import { generateKeyPair } from 'crypto';
+import * as fs from 'fs';
 
 export class ConfigService {
   private readonly envConfig: { [key: string]: any } = null;
@@ -16,6 +19,8 @@ export class ConfigService {
     WEBAUTHN_RPNAME: 'Chat',
     REDIS_HOST: 'redis',
     REDIS_PORT: 6379,
+    JWT_PUBKEY: '/config/jwtRS256.key.pub',
+    JWT_PRIVKEY: '/config/jwtRS256.key',
     ...this.RMQ_QUEUES,
   };
 
@@ -31,6 +36,8 @@ export class ConfigService {
       WEBAUTHN_ORIGIN: this.getValueFromEnv('WEBAUTHN_ORIGIN'),
       REDIS_HOST: this.getValueFromEnv('REDIS_HOST'),
       REDIS_PORT: this.getValueFromEnv('REDIS_PORT'),
+      JWT_PUBKEY: this.getValueFromEnv('JWT_PUBKEY'),
+      JWT_PRIVKEY: this.getValueFromEnv('JWT_PRIVKEY'),
     };
 
     this.envConfig.userService = {
@@ -55,5 +62,66 @@ export class ConfigService {
 
   get(key: string): any {
     return this.envConfig[key] || process.env[key];
+  }
+
+  async generateJwtKeys() {
+    const { publicKey, privateKey } = await new Promise<{
+      publicKey: string;
+      privateKey: string;
+    }>((resolve, reject) => {
+      generateKeyPair(
+        'rsa',
+        {
+          modulusLength: 4096,
+          publicKeyEncoding: {
+            type: 'spki',
+            format: 'pem',
+          },
+          privateKeyEncoding: {
+            type: 'pkcs8',
+            format: 'pem',
+          },
+        },
+        (err, publicKey, privateKey) => {
+          if (err) {
+            return reject(err);
+          }
+
+          resolve({ publicKey, privateKey });
+        },
+      );
+    });
+
+    if (!fs.existsSync('/config')) {
+      await fs.promises.mkdir('/config');
+    }
+
+    await fs.promises.writeFile(this.get('JWT_PUBKEY'), publicKey);
+    await fs.promises.writeFile(this.get('JWT_PRIVKEY'), privateKey);
+  }
+
+  async getJwtOptions(): Promise<JwtModuleOptions> {
+    if (
+      !fs.existsSync(this.get('JWT_PUBKEY')) ||
+      !fs.existsSync(this.get('JWT_PRIVKEY'))
+    ) {
+      await this.generateJwtKeys();
+    }
+
+    const publicKey = await fs.promises.readFile(this.get('JWT_PUBKEY'));
+    const privateKey = await fs.promises.readFile(this.get('JWT_PRIVKEY'));
+
+    return {
+      publicKey,
+      privateKey,
+      signOptions: {
+        issuer: this.getValueFromEnv('JWT_ISSUER') || 'chat.suchanecki.me',
+        algorithm: 'RS256',
+      },
+      verifyOptions: {
+        algorithms: ['RS256'],
+        issuer: this.getValueFromEnv('JWT_ISSUER') || 'chat.suchanecki.me',
+      },
+    };
   }
 }

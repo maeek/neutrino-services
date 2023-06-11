@@ -4,8 +4,8 @@ import { Credential, CredentialSchema } from './credentials.schema';
 import { Settings, SettingsSchema } from './settings.schema';
 
 export enum UserRole {
-  ROOT = 'ROOT',
-  USER = 'USER',
+  ADMIN = 'admin',
+  USER = 'user',
 }
 
 export enum AccountLoginType {

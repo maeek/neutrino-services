@@ -5,6 +5,7 @@ import { AppModule } from './app.module';
 import { ConfigService } from './services/config/config.service';
 // import { Logger } from '@nestjs/common';
 import * as compression from 'compression';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -24,6 +25,7 @@ async function bootstrap() {
   app.use(helmet());
   app.use(helmet.hidePoweredBy());
   app.use(compression());
+  app.use(cookieParser());
 
   const configService = new ConfigService();
   await app.listen(configService.get('API_PORT'));

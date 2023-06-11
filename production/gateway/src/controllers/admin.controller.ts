@@ -3,8 +3,8 @@ import {
   Controller,
   Get,
   Patch,
-  // SetMetadata,
-  // UseGuards,
+  SetMetadata,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -14,8 +14,9 @@ import {
   GetConfigResponseDto,
   SetConfigRequestDto,
 } from '../interfaces/admin.interface';
-// import { UserRole } from '../interfaces/user.interface';
-// import { RolesGuard } from '../guards/roles.guard';
+import { UserRole } from '../interfaces/user.interface';
+import { RolesGuard } from '../guards/roles.guard';
+import { AuthGuard } from '../guards/jwt.guard';
 
 @Controller('admin')
 export class AdminController {
@@ -37,8 +38,8 @@ export class AdminController {
   @Patch('/config')
   @ApiOperation({ summary: 'Update server configuration' })
   @ApiTags('Configuration')
-  // @SetMetadata('roles', [UserRole.ADMIN])
-  // @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  @UseGuards(AuthGuard, RolesGuard)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async setConfig(
     @Body() config: SetConfigRequestDto,
@@ -49,8 +50,8 @@ export class AdminController {
   @Get('/audit')
   @ApiOperation({ summary: 'Get audit logs' })
   @ApiTags('Configuration')
-  // @SetMetadata('roles', [UserRole.ADMIN])
-  // @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  @UseGuards(AuthGuard, RolesGuard)
   async getAuditLogs() {
     try {
       const logs = await this.adminService.getAuditLogs();

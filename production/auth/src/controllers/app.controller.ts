@@ -1,6 +1,9 @@
-import { Controller } from '@nestjs/common';
+import { Body, Controller, UsePipes, ValidationPipe } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { AppService } from '../services/app.service';
+import { LoginRequestDto } from 'src/interfaces/login.interface';
+import { LogoutRequestDto } from 'src/interfaces/logout.interface';
+import { GetSessionAndRenewRequestDto } from 'src/interfaces/get-session.interface';
 
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'auth.getHealth',
@@ -11,6 +14,7 @@ enum MESSAGE_PATTERNS {
   GET_CHALLENGE = 'auth.getChallenge',
   SOLVE_CHALLENGE = 'auth.solveChallenge',
   GET_SESSION = 'auth.getSession',
+  GET_SESSION_AND_RENEW = 'auth.getSessionAndRenew',
   GET_SESSIONS = 'auth.getSessions',
   LOGOUT = 'auth.logout',
   LOGOUT_SESSIONS = 'auth.logoutSessions',
@@ -21,57 +25,72 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @MessagePattern(MESSAGE_PATTERNS.GET_HEALTH)
-  getHealth() {
+  async getHealth() {
     return this.appService.getHealth();
   }
 
   @MessagePattern(MESSAGE_PATTERNS.LOGIN)
-  login() {
-    return this.appService.login();
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async login(@Body() body: LoginRequestDto) {
+    try {
+      const loggedIn = await this.appService.login(
+        body.username,
+        body.method,
+        body.method === 'password' ? body.password : body.webauthn,
+      );
+
+      return loggedIn;
+    } catch (error) {
+      console.error(error);
+      return {
+        loggedIn: false,
+      };
+    }
   }
 
-  @MessagePattern(MESSAGE_PATTERNS.LOGIN_WEBAUTHN)
-  loginWebAuthn() {
-    return this.appService.loginWebAuthn();
-  }
+  // @MessagePattern(MESSAGE_PATTERNS.LOGIN_WEBAUTHN)
+  // async loginWebAuthn() {
+  //   return this.appService.loginWebAuthn();
+  // }
 
   @MessagePattern(MESSAGE_PATTERNS.LOGIN_WEBAUTHN_VERIFY)
-  loginWebAuthnVerify() {
+  async loginWebAuthnVerify() {
     return this.appService.loginWebAuthnVerify();
   }
 
-  @MessagePattern(MESSAGE_PATTERNS.GET_SESSION)
-  getSession() {
-    return this.appService.getSession('');
+  @MessagePattern(MESSAGE_PATTERNS.GET_SESSION_AND_RENEW)
+  async getSession(@Body() body: GetSessionAndRenewRequestDto) {
+    return this.appService.getSessionAndRenew(body.refreshToken);
   }
 
-  @MessagePattern(MESSAGE_PATTERNS.GET_SESSIONS)
-  getSessions() {
-    return this.appService.getSessions('');
-  }
+  // @MessagePattern(MESSAGE_PATTERNS.GET_SESSIONS)
+  // async getSessions() {
+  //   return this.appService.getSessions('');
+  // }
 
   @MessagePattern(MESSAGE_PATTERNS.LOGOUT)
-  logout() {
-    return this.appService.logout('');
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async logout(@Body() body: LogoutRequestDto) {
+    return this.appService.logout(body.refreshToken);
   }
 
-  @MessagePattern(MESSAGE_PATTERNS.LOGOUT_SESSIONS)
-  logoutSessions() {
-    return this.appService.logoutSessions('', []);
-  }
+  // @MessagePattern(MESSAGE_PATTERNS.LOGOUT_SESSIONS)
+  // async logoutSessions() {
+  //   return this.appService.logoutSessions('', []);
+  // }
 
-  @MessagePattern(MESSAGE_PATTERNS.CREATE_WEBAUTHN_OPTIONS)
-  createWebAuthnOptions() {
-    return this.appService.createWebAuthnOptions();
-  }
+  // @MessagePattern(MESSAGE_PATTERNS.CREATE_WEBAUTHN_OPTIONS)
+  // async createWebAuthnOptions() {
+  //   return this.appService.createWebAuthnOptions();
+  // }
 
-  @MessagePattern(MESSAGE_PATTERNS.GET_CHALLENGE)
-  getChallenge() {
-    return this.appService.getChallenge();
-  }
+  // @MessagePattern(MESSAGE_PATTERNS.GET_CHALLENGE)
+  // async getChallenge() {
+  //   return this.appService.getChallenge();
+  // }
 
-  @MessagePattern(MESSAGE_PATTERNS.SOLVE_CHALLENGE)
-  solveChallenge() {
-    return this.appService.solveChallenge();
-  }
+  // @MessagePattern(MESSAGE_PATTERNS.SOLVE_CHALLENGE)
+  // async solveChallenge() {
+  //   return this.appService.solveChallenge();
+  // }
 }

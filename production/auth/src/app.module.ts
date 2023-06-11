@@ -10,6 +10,8 @@ import { WebAuthnService } from './services/webauthn.service';
 import { RedisClientOptions } from 'redis';
 import { redisStore } from 'cache-manager-ioredis-yet';
 import { ClientProxyFactory } from '@nestjs/microservices';
+import { JwtModule } from '@nestjs/jwt';
+import { TokenSigningService } from './services/jwt.service';
 
 @Module({
   imports: [
@@ -35,6 +37,17 @@ import { ClientProxyFactory } from '@nestjs/microservices';
         };
       },
     }),
+    JwtModule.registerAsync({
+      useFactory: async () => {
+        const configService = new ConfigService();
+        const { publicKey, privateKey } = await configService.getJwtOptions();
+
+        return {
+          publicKey,
+          privateKey,
+        };
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [
@@ -42,6 +55,7 @@ import { ClientProxyFactory } from '@nestjs/microservices';
     TokensRepository,
     ConfigService,
     WebAuthnService,
+    TokenSigningService,
     Logger,
     {
       provide: 'USER_SERVICE',
