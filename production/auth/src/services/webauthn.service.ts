@@ -81,8 +81,6 @@ export class WebAuthnService {
 
   async verifyRegistration(username: string, body: any) {
     try {
-      console.log('verify', username, body);
-
       // Retrieve the challenge from the cache
       const expectedChallenge = await this.cacheManager.get<string>(
         `challenge-${username}`,
@@ -118,8 +116,6 @@ export class WebAuthnService {
 
   async verifyAuth(username: string, body: AuthenticationResponseJSON) {
     try {
-      console.log('verify', username, body);
-
       const authenticators = await this.getUserAuthenticators(username);
       const authenticator = authenticators.find(
         (a) => a.id.toString() === body.id,

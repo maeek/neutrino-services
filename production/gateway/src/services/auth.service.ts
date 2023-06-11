@@ -4,6 +4,7 @@ import { firstValueFrom, timeout } from 'rxjs';
 import {
   LoginRequestDto,
   LoginResponseDto,
+  SessionResponse,
 } from '../interfaces/auth.interface';
 import { UsersResponseDto } from '../interfaces/user.interface';
 import { StandardErrorResponse } from 'src/interfaces/error.interface';
@@ -92,7 +93,7 @@ export class AuthService {
     }
   }
 
-  async logout(username: string, sessionId: string): Promise<void> {
+  async logout(username: string, sessions: string[]): Promise<void> {
     try {
       this.logger.debug('Sending logout request to auth service');
 
@@ -100,7 +101,7 @@ export class AuthService {
         this.authServiceClient
           .send<void>(MESSAGE_PATTERNS.LOGOUT, {
             username,
-            sessionId,
+            sessions,
           })
           .pipe(timeout(5000)),
       );
@@ -111,7 +112,7 @@ export class AuthService {
     }
   }
 
-  async checkSessionAndRefresh(refreshToken: string) {
+  async checkSessionAndRefresh(refreshToken: string, accessToken: string) {
     try {
       this.logger.debug('Sending check session request to auth service');
 
@@ -127,6 +128,7 @@ export class AuthService {
             accessToken: string;
           }>(MESSAGE_PATTERNS.GET_SESSION_AND_RENEW, {
             refreshToken,
+            accessToken,
           })
           .pipe(timeout(5000)),
       );
@@ -137,6 +139,27 @@ export class AuthService {
     } catch (error) {
       this.logger.error(error);
       return false;
+    }
+  }
+
+  async getActiveSessions(username: string) {
+    try {
+      this.logger.debug('Sending get sessions request to auth service');
+
+      const sessions = await firstValueFrom(
+        this.authServiceClient
+          .send<SessionResponse[]>(MESSAGE_PATTERNS.GET_SESSIONS, {
+            username,
+          })
+          .pipe(timeout(5000)),
+      );
+
+      this.logger.debug('Received get sessions response from auth service');
+
+      return sessions;
+    } catch (error) {
+      this.logger.error(error);
+      return [];
     }
   }
 }

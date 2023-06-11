@@ -15,7 +15,11 @@ import {
 } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { LoginRequestDto } from '../interfaces/auth.interface';
+import {
+  DeleteSessionsRequestDto,
+  LoginRequestDto,
+  SessionResponse,
+} from '../interfaces/auth.interface';
 import { UserService } from '../services/user.service';
 import { Response } from 'express';
 import { isError } from '../interfaces/error.interface';
@@ -93,7 +97,7 @@ export class AuthController {
       const refreshToken = req.refreshToken.id;
       const username = req.user.username;
 
-      await this.authService.logout(username, refreshToken);
+      await this.authService.logout(username, [refreshToken]);
 
       res.clearCookie('chat-session', {
         httpOnly: true,
@@ -114,15 +118,42 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout active sessions by Id' })
   @ApiTags('Authentication')
   @UseGuards(AuthGuard)
-  async logoutById() {
-    return {};
+  async logoutById(
+    @Req() req,
+    @Body() body: DeleteSessionsRequestDto,
+    @Res() res: Response,
+  ) {
+    try {
+      await this.authService.logout(req.user.username, body.sessions);
+
+      res.status(HttpStatus.NO_CONTENT);
+    } catch (error) {
+      res.status(HttpStatus.UNAUTHORIZED).json({
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message: 'Invalid session',
+      });
+    } finally {
+      res.end();
+    }
   }
 
   @Get('/sessions')
   @ApiOperation({ summary: 'Get active sessions' })
   @ApiTags('Authentication')
   @UseGuards(AuthGuard)
-  async getActiveSessions() {
-    return {};
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getActiveSessions(@Req() req: any) {
+    try {
+      const sessions = await this.authService.getActiveSessions(
+        req.user.username,
+      );
+
+      return {
+        items: sessions.map((session) => new SessionResponse(session)),
+        total: sessions.length,
+      };
+    } catch (error) {
+      return { sessions: [] };
+    }
   }
 }

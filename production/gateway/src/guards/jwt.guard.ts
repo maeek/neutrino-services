@@ -11,14 +11,14 @@ export class AuthGuard implements CanActivate {
     const accessToken = this.extractJwtFromHeaders(request.headers);
     const refreshToken = request.cookies?.['chat-session'];
 
-    // console.warn(accessToken);
-    // console.warn(refreshToken);
-
     if (!accessToken || !refreshToken) {
       return false;
     }
 
-    const jwtRes = await this.authService.checkSessionAndRefresh(refreshToken);
+    const jwtRes = await this.authService.checkSessionAndRefresh(
+      refreshToken,
+      accessToken,
+    );
 
     if (!jwtRes) {
       response.clearCookie('chat-session');

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from './config/config.service';
 import { UsersRepository } from './user.repository';
 import { User, UserRole } from '../schemas/users.schema';
@@ -7,21 +7,39 @@ import {
   CreateUserRequestDto,
   WebAuthnRequestDto,
 } from '../interfaces/create-user.interface';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom, timeout } from 'rxjs';
 
-export interface CreateUserWithPasswordDto {
-  username: string;
-  password: string;
-  role: UserRole;
-  avatar?: string;
-  bio?: string;
+enum AUTH_MESSAGE_PATTERNS {
+  LOGOUT_ALL_SESSIONS = 'auth.logoutAllSessions',
 }
 
 @Injectable()
-export class AppService {
+export class AppService implements OnModuleInit {
   constructor(
     private readonly configService: ConfigService,
     private readonly usersRepository: UsersRepository,
+    @Inject('AUTH_SERVICE')
+    private readonly authServiceClient: ClientProxy,
   ) {}
+
+  onModuleInit() {
+    this.initAdminUser();
+  }
+
+  async initAdminUser() {
+    const adminUser = await this.usersRepository.findOne({
+      username: 'admin',
+    });
+
+    if (!adminUser) {
+      await this.createUserWithPassword(
+        'admin',
+        this.configService.get('ADMIN_PASSWORD'),
+        UserRole.ADMIN,
+      );
+    }
+  }
 
   getHealth() {
     return { status: 'ok' };
@@ -40,7 +58,10 @@ export class AppService {
       limit,
     );
 
-    return users;
+    return {
+      users,
+      total: await this.usersRepository.count({}),
+    };
   }
 
   async getUser(username: string): Promise<User> {
@@ -102,6 +123,13 @@ export class AppService {
 
   async removeUser(username: string): Promise<boolean> {
     const removed = await this.usersRepository.remove({ username });
+    await firstValueFrom(
+      this.authServiceClient
+        .send(AUTH_MESSAGE_PATTERNS.LOGOUT_ALL_SESSIONS, {
+          username,
+        })
+        .pipe(timeout(5000)),
+    );
 
     return removed.acknowledged && removed.deletedCount > 0;
   }
@@ -143,6 +171,51 @@ export class AppService {
       {
         $pull: {
           sessions: session,
+        },
+      },
+    );
+  }
+
+  async updateUser(
+    username: string,
+    body: {
+      description?: string;
+      avatar?: string;
+      currentPassword?: string;
+      password?: string;
+    },
+  ) {
+    if (body.currentPassword && body.password) {
+      const user = await this.getUserWithPassword(
+        username,
+        body.currentPassword,
+      );
+
+      if (!user) {
+        throw new Error('Invalid password');
+      }
+
+      const passwordSalt = await bcrypt.genSalt(
+        this.configService.get('SALT_ROUNDS'),
+      );
+      const passwordHash = await bcrypt.hash(body.password, passwordSalt);
+
+      return this.usersRepository.findOneAndUpdate(
+        { username },
+        {
+          $set: {
+            hash: passwordHash,
+          },
+        },
+      );
+    }
+
+    return this.usersRepository.findOneAndUpdate(
+      { username },
+      {
+        $set: {
+          description: body.description,
+          avatar: body.avatar,
         },
       },
     );

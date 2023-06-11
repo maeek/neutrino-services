@@ -4,6 +4,7 @@ import { AppService } from '../services/app.service';
 import { LoginRequestDto } from 'src/interfaces/login.interface';
 import { LogoutRequestDto } from 'src/interfaces/logout.interface';
 import { GetSessionAndRenewRequestDto } from 'src/interfaces/get-session.interface';
+import { GetSessionsRequestDto } from 'src/interfaces/get-sessions.interface';
 
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'auth.getHealth',
@@ -18,6 +19,7 @@ enum MESSAGE_PATTERNS {
   GET_SESSIONS = 'auth.getSessions',
   LOGOUT = 'auth.logout',
   LOGOUT_SESSIONS = 'auth.logoutSessions',
+  LOGOUT_ALL_SESSIONS = 'auth.logoutAllSessions',
 }
 
 @Controller()
@@ -59,25 +61,37 @@ export class AppController {
   }
 
   @MessagePattern(MESSAGE_PATTERNS.GET_SESSION_AND_RENEW)
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async getSession(@Body() body: GetSessionAndRenewRequestDto) {
-    return this.appService.getSessionAndRenew(body.refreshToken);
+    if (!body.refreshToken && !body.accessToken) {
+      return {
+        error: 'No refresh token or access token provided',
+      };
+    }
+
+    return this.appService.getSessionAndRenew(
+      body.refreshToken,
+      body.accessToken,
+    );
   }
 
-  // @MessagePattern(MESSAGE_PATTERNS.GET_SESSIONS)
-  // async getSessions() {
-  //   return this.appService.getSessions('');
-  // }
+  @MessagePattern(MESSAGE_PATTERNS.GET_SESSIONS)
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async getSessions(@Body() body: GetSessionsRequestDto) {
+    return this.appService.getSessions(body.username);
+  }
 
   @MessagePattern(MESSAGE_PATTERNS.LOGOUT)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async logout(@Body() body: LogoutRequestDto) {
-    return this.appService.logout(body.username, body.sessionId);
+    return this.appService.logout(body.username, body.sessions);
   }
 
-  // @MessagePattern(MESSAGE_PATTERNS.LOGOUT_SESSIONS)
-  // async logoutSessions() {
-  //   return this.appService.logoutSessions('', []);
-  // }
+  @MessagePattern(MESSAGE_PATTERNS.LOGOUT_ALL_SESSIONS)
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async logoutAllSessions(@Body() body: LogoutRequestDto) {
+    return this.appService.logoutAllSession(body.username);
+  }
 
   // @MessagePattern(MESSAGE_PATTERNS.CREATE_WEBAUTHN_OPTIONS)
   // async createWebAuthnOptions() {

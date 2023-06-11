@@ -102,6 +102,48 @@ export class UsersResponseDto {
   }
 }
 
+export class UsersLoggedResponseDto {
+  @Exclude()
+  id: string;
+
+  @ApiProperty()
+  username: string;
+
+  @ApiProperty()
+  createdAt: number;
+
+  @ApiProperty()
+  role?: UserRole;
+
+  @Exclude()
+  supportedLoginTypes: string[];
+
+  @ApiProperty()
+  sessions: string[];
+
+  @Exclude()
+  hash: string[];
+
+  @Exclude()
+  locked: boolean;
+
+  @Exclude()
+  credentials: Record<string, unknown>[];
+
+  @ApiProperty()
+  settings: Record<string, unknown>;
+
+  @ApiProperty()
+  avatar: string;
+
+  @ApiProperty()
+  description: string;
+
+  constructor(partial: Partial<UsersLoggedResponseDto>) {
+    Object.assign(this, partial);
+  }
+}
+
 export class SelfUserResponseDto {
   @Exclude()
   id: string;

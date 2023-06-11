@@ -77,8 +77,6 @@ export class AppService {
         .pipe(timeout(5000)),
     );
 
-    console.log([...user.sessions, savedToken.id]);
-
     return {
       loggedIn: true,
       refreshToken,
@@ -98,10 +96,11 @@ export class AppService {
     return {};
   }
 
-  async getSessionAndRenew(refreshToken: string) {
+  async getSessionAndRenew(refreshToken: string, accessToken: string) {
     try {
+      await this.jwtService.verifyRefreshToken(refreshToken);
+
       const token = await this.tokenRepository.findOne({ refreshToken });
-      console.log(token);
       const user = await firstValueFrom(
         this.userServiceClient
           .send<{
@@ -118,11 +117,16 @@ export class AppService {
         throw new Error('Invalid session');
       }
 
-      const newAccessToken = await this.jwtService.createAccessToken(
-        user.username,
-        user.role,
-        token.id,
-      );
+      let newAccessToken = accessToken;
+      try {
+        await this.jwtService.verifyAccessToken(newAccessToken);
+      } catch {
+        newAccessToken = await this.jwtService.createAccessToken(
+          user.username,
+          user.role,
+          token.id,
+        );
+      }
 
       return {
         verified: true,
@@ -131,6 +135,7 @@ export class AppService {
         user,
       };
     } catch (error) {
+      console.error(error);
       this.logger.error(error);
       return {
         verified: false,
@@ -143,23 +148,36 @@ export class AppService {
       const tokens = await this.tokenRepository.find({ username });
       return tokens;
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error(error, error.stack);
       throw error;
     }
   }
 
-  async logout(username: string, sessionId: string) {
+  async logout(username: string, sessions: string[]) {
     try {
       await this.tokenRepository.remove({
-        _id: sessionId,
-      });
-      await firstValueFrom(
-        this.userServiceClient
-          .send(USER_MESSAGE_PATTERNS.REMOVE_SESSION_FROM_USER, {
+        $and: [
+          {
             username,
-            sessionId,
-          })
-          .pipe(timeout(5000)),
+          },
+          {
+            _id: {
+              $in: sessions,
+            },
+          },
+        ],
+      });
+      await Promise.all(
+        sessions.map((sessionId) => {
+          return firstValueFrom(
+            this.userServiceClient
+              .send(USER_MESSAGE_PATTERNS.REMOVE_SESSION_FROM_USER, {
+                username,
+                sessionId,
+              })
+              .pipe(timeout(5000)),
+          );
+        }),
       );
       // await this.messageService.logout(username, [refreshToken])
       return {};
@@ -178,6 +196,19 @@ export class AppService {
         },
       });
       // await this.messageService.logout(username, sessions)
+      return {};
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  async logoutAllSession(username: string) {
+    try {
+      await this.tokenRepository.remove({
+        username,
+      });
+      // await this.messageService.logoutAll(username)
       return {};
     } catch (error) {
       this.logger.error(error);

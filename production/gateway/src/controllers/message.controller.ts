@@ -11,6 +11,7 @@ import {
   Put,
   Query,
   Res,
+  UseGuards,
   UseInterceptors,
   UsePipes,
   ValidationPipe,
@@ -32,8 +33,10 @@ import {
 import { PaginationParams } from 'src/interfaces/validators/pagination';
 import { IDParams } from 'src/interfaces/validators/id';
 import { Response } from 'express';
+import { AuthGuard } from 'src/guards/jwt.guard';
 
 @Controller('messages')
+@UseGuards(AuthGuard)
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}
 

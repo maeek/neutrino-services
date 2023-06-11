@@ -1,9 +1,10 @@
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class LogoutRequestDto {
   @IsString()
   username: string;
 
-  @IsString()
-  sessionId: string;
+  @IsString({ each: true })
+  @IsOptional()
+  sessions: string[];
 }

@@ -11,6 +11,7 @@ import { AuthService } from './services/auth.service';
 import { MessageService } from './services/message.service';
 import { MessageController } from './controllers/message.controller';
 import { UserService } from './services/user.service';
+import { FileService } from './services/file.service';
 
 @Module({
   imports: [],
@@ -28,6 +29,7 @@ import { UserService } from './services/user.service';
     AuthService,
     UserService,
     MessageService,
+    FileService,
     Logger,
     {
       provide: 'ADMIN_SERVICE',

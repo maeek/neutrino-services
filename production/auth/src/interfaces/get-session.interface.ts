@@ -1,4 +1,9 @@
+import { IsJWT } from 'class-validator';
+
 export class GetSessionAndRenewRequestDto {
-  accessToken: string;
+  @IsJWT()
   refreshToken: string;
+
+  @IsJWT()
+  accessToken: string;
 }

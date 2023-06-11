@@ -14,12 +14,15 @@ export class ConfigService {
     API_PORT: 8080,
     RABBITMQ_URL: 'amqp://test:test@rabbitmq:5671',
     RABBITMQ_SURVIVE_RESTART: false,
+    FILES_DIR: '/data/avatars',
     ...this.RMQ_QUEUES,
   };
 
   constructor() {
-    this.envConfig = {};
-    this.envConfig.API_PORT = this.getValueFromEnv('API_PORT');
+    this.envConfig = {
+      FILES_DIR: this.getValueFromEnv('FILES_DIR'),
+      API_PORT: this.getValueFromEnv('API_PORT'),
+    };
 
     this.envConfig.adminService = {
       options: {

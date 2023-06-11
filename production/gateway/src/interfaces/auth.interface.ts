@@ -7,6 +7,7 @@ import {
   IsStrongPassword,
 } from 'class-validator';
 import { UsersResponseDto } from './user.interface';
+import { Exclude } from 'class-transformer';
 
 class WebAuthnRequestResponseDto {
   @IsBase64()
@@ -68,4 +69,28 @@ export class LoginResponseDto {
   accessToken: string;
   refreshToken: string;
   user: UsersResponseDto;
+}
+
+export class DeleteSessionsRequestDto {
+  @ApiProperty()
+  @IsString()
+  sessions: string[];
+}
+
+export class SessionResponse {
+  @Exclude()
+  refreshToken: string;
+
+  @Exclude()
+  username: string;
+
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  createdAt: number;
+
+  constructor(partial: Partial<SessionResponse>) {
+    Object.assign(this, partial);
+  }
 }

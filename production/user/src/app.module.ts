@@ -8,6 +8,7 @@ import { SettingsSchema } from './schemas/settings.schema';
 import { CredentialSchema } from './schemas/credentials.schema';
 import { UsersRepository } from './services/user.repository';
 import { ConfigService } from './services/config/config.service';
+import { ClientProxyFactory } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -33,6 +34,19 @@ import { ConfigService } from './services/config/config.service';
     ]),
   ],
   controllers: [AppController],
-  providers: [AppService, Logger, UsersRepository, ConfigService],
+  providers: [
+    AppService,
+    Logger,
+    UsersRepository,
+    ConfigService,
+    {
+      provide: 'AUTH_SERVICE',
+      useFactory: (configService: ConfigService) => {
+        const tokenServiceOptions = configService.get('authService');
+        return ClientProxyFactory.create(tokenServiceOptions);
+      },
+      inject: [ConfigService],
+    },
+  ],
 })
 export class AppModule {}

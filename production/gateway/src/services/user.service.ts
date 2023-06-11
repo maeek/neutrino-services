@@ -11,6 +11,7 @@ enum MESSAGE_PATTERNS {
   GET_HEALTH = 'user.getHealth',
   CREATE_USER = 'user.createUser',
   GET_USER = 'user.getUser',
+  UPDATE_USER = 'user.updateUser',
   GET_USERS = 'user.getUsers',
   GET_LOGGED_USER = 'user.getLoggedUser',
   REMOVE_USER = 'user.removeUser',
@@ -105,10 +106,6 @@ export class UserService {
     }
   }
 
-  async getLoggedUser() {
-    return {};
-  }
-
   async createUser(
     userPayload: CreateUserDto,
   ): Promise<CreateUserResponseDto | StandardErrorResponse> {
@@ -129,8 +126,32 @@ export class UserService {
     }
   }
 
-  async updateUser() {
-    return {};
+  async updateUser(
+    username: string,
+    userPayload: { description?: string; avatar?: File },
+  ) {
+    try {
+      const user = await firstValueFrom(
+        this.userServiceClient
+          .send(MESSAGE_PATTERNS.UPDATE_USER, {
+            username,
+            userPayload,
+          })
+          .pipe(timeout(5000)),
+      );
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      return user;
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        statusCode: HttpStatus.FORBIDDEN,
+        error: error.message,
+      };
+    }
   }
 
   async removeUser(id: string) {
