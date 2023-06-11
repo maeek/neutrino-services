@@ -8,6 +8,8 @@ import { TokenSigningService } from './jwt.service';
 enum USER_MESSAGE_PATTERNS {
   GET_USER = 'user.getUser',
   GET_USER_WITH_PASSWORD = 'user.getUserWithPassword',
+  SET_SESSION_TO_USER = 'user.setSessionToUser',
+  REMOVE_SESSION_FROM_USER = 'user.removeSessionFromUser',
 }
 
 @Injectable()
@@ -66,11 +68,25 @@ export class AppService {
       savedToken.id,
     );
 
+    await firstValueFrom(
+      this.userServiceClient
+        .send(USER_MESSAGE_PATTERNS.SET_SESSION_TO_USER, {
+          username,
+          sessionId: savedToken.id,
+        })
+        .pipe(timeout(5000)),
+    );
+
+    console.log([...user.sessions, savedToken.id]);
+
     return {
       loggedIn: true,
       refreshToken,
       accessToken,
-      user,
+      user: {
+        ...user,
+        sessions: [...user.sessions, savedToken.id],
+      },
     };
   }
 
@@ -85,11 +101,13 @@ export class AppService {
   async getSessionAndRenew(refreshToken: string) {
     try {
       const token = await this.tokenRepository.findOne({ refreshToken });
+      console.log(token);
       const user = await firstValueFrom(
         this.userServiceClient
           .send<{
             username: string;
             role: string;
+            sessions: string[];
           }>(USER_MESSAGE_PATTERNS.GET_USER, {
             id: token.username,
           })
@@ -130,9 +148,19 @@ export class AppService {
     }
   }
 
-  async logout(refreshToken: string) {
+  async logout(username: string, sessionId: string) {
     try {
-      await this.tokenRepository.remove({ refreshToken });
+      await this.tokenRepository.remove({
+        _id: sessionId,
+      });
+      await firstValueFrom(
+        this.userServiceClient
+          .send(USER_MESSAGE_PATTERNS.REMOVE_SESSION_FROM_USER, {
+            username,
+            sessionId,
+          })
+          .pipe(timeout(5000)),
+      );
       // await this.messageService.logout(username, [refreshToken])
       return {};
     } catch (error) {

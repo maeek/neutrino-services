@@ -14,6 +14,7 @@ enum MESSAGE_PATTERNS {
   GET_USERS = 'user.getUsers',
   GET_LOGGED_USER = 'user.getLoggedUser',
   REMOVE_USER = 'user.removeUser',
+  SET_SESSION_TO_USER = 'user.setSessionToUser',
 }
 
 @Injectable()

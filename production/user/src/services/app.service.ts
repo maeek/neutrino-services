@@ -125,4 +125,26 @@ export class AppService {
       return null;
     }
   }
+
+  async setSessionToUser(username: string, session: string) {
+    return this.usersRepository.findOneAndUpdate(
+      { username },
+      {
+        $addToSet: {
+          sessions: session,
+        },
+      },
+    );
+  }
+
+  async removeSessionFromUser(username: string, session: string) {
+    return this.usersRepository.findOneAndUpdate(
+      { username },
+      {
+        $pull: {
+          sessions: session,
+        },
+      },
+    );
+  }
 }

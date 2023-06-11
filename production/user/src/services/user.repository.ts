@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model } from 'mongoose';
+import { FilterQuery, Model, UpdateQuery } from 'mongoose';
 import { User, UserDocument } from '../schemas/users.schema';
 
 @Injectable()
@@ -47,7 +47,7 @@ export class UsersRepository {
 
   async findOneAndUpdate(
     userFilterQuery: FilterQuery<UserDocument>,
-    user: Partial<User>,
+    user: UpdateQuery<Partial<User>>,
   ) {
     return this.userModel.findOneAndUpdate(userFilterQuery, user, {
       new: true,

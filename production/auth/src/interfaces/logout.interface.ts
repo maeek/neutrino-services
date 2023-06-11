@@ -1,6 +1,9 @@
-import { IsBase64 } from 'class-validator';
+import { IsString } from 'class-validator';
 
 export class LogoutRequestDto {
-  @IsBase64()
-  refreshToken: string;
+  @IsString()
+  username: string;
+
+  @IsString()
+  sessionId: string;
 }

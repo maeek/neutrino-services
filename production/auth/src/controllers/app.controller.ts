@@ -71,7 +71,7 @@ export class AppController {
   @MessagePattern(MESSAGE_PATTERNS.LOGOUT)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async logout(@Body() body: LogoutRequestDto) {
-    return this.appService.logout(body.refreshToken);
+    return this.appService.logout(body.username, body.sessionId);
   }
 
   // @MessagePattern(MESSAGE_PATTERNS.LOGOUT_SESSIONS)

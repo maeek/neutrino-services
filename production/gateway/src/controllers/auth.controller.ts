@@ -17,7 +17,7 @@ import { AuthService } from '../services/auth.service';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { LoginRequestDto } from '../interfaces/auth.interface';
 import { UserService } from '../services/user.service';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { isError } from '../interfaces/error.interface';
 import { SelfUserResponseDto } from '../interfaces/user.interface';
 import { instanceToPlain } from 'class-transformer';
@@ -88,13 +88,14 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout' })
   @ApiTags('Authentication')
   @UseGuards(AuthGuard)
-  async logout(@Req() req: Request, @Res() res: Response) {
+  async logout(@Req() req: any, @Res() res: Response) {
     try {
-      const refreshToken = req.cookies['x-refreshToken'];
+      const refreshToken = req.refreshToken.id;
+      const username = req.user.username;
 
-      await this.authService.logout(refreshToken);
+      await this.authService.logout(username, refreshToken);
 
-      res.clearCookie('x-refreshToken', {
+      res.clearCookie('chat-session', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         domain: process.env.COOKIE_DOMAIN,

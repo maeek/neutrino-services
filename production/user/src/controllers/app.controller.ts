@@ -17,6 +17,8 @@ enum MESSAGE_PATTERNS {
   GET_USERS = 'user.getUsers',
   GET_LOGGED_USER = 'user.getLoggedUser',
   REMOVE_USER = 'user.removeUser',
+  SET_SESSION_TO_USER = 'user.setSessionToUser',
+  REMOVE_SESSION_FROM_USER = 'user.removeSessionFromUser',
 }
 
 @Controller()
@@ -72,5 +74,15 @@ export class AppController {
   @MessagePattern(MESSAGE_PATTERNS.GET_USER_WITH_PASSWORD)
   async getUserWithPassword(@Body() body: any) {
     return this.appService.getUserWithPassword(body.username, body.password);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.SET_SESSION_TO_USER)
+  async setSessionToUser(@Body() body: any) {
+    return this.appService.setSessionToUser(body.username, body.sessionId);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.REMOVE_SESSION_FROM_USER)
+  async removeSessionFromUser(@Body() body: any) {
+    return this.appService.removeSessionFromUser(body.username, body.sessionId);
   }
 }

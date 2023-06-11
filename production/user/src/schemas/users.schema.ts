@@ -13,7 +13,7 @@ export enum AccountLoginType {
   WEBAUTHN = 1,
 }
 
-const restrictedUsernames = ['root', 'admin', 'administrator', 'server'];
+const restrictedUsernames = ['server'];
 
 export type UserDocument = HydratedDocument<User>;
 

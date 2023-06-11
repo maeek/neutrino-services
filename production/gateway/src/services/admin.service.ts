@@ -76,7 +76,7 @@ export class AdminService {
 
   async setConfig(config: SetConfigRequestDto) {
     try {
-      this.logger.debug('Sending config update to admin service', config);
+      this.logger.debug('Sending config update to admin service');
 
       const updatedConfig = await firstValueFrom(
         this.adminServiceClient
@@ -84,10 +84,7 @@ export class AdminService {
           .pipe(timeout(5000)),
       );
 
-      this.logger.debug(
-        'Received updated config from admin service',
-        updatedConfig,
-      );
+      this.logger.debug('Received updated config from admin service');
 
       return updatedConfig;
     } catch (error) {

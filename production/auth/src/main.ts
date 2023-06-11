@@ -11,7 +11,6 @@ async function bootstrap() {
     options: {
       urls: [configService.get('RABBITMQ_URL')],
       queue: configService.get('RABBITMQ_QUEUE'),
-      persist: true,
       queueOptions: {
         durable: false,
       },

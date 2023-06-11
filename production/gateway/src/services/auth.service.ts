@@ -92,14 +92,15 @@ export class AuthService {
     }
   }
 
-  async logout(refreshToken: string): Promise<void> {
+  async logout(username: string, sessionId: string): Promise<void> {
     try {
       this.logger.debug('Sending logout request to auth service');
 
       await firstValueFrom(
         this.authServiceClient
           .send<void>(MESSAGE_PATTERNS.LOGOUT, {
-            refreshToken,
+            username,
+            sessionId,
           })
           .pipe(timeout(5000)),
       );
@@ -130,10 +131,7 @@ export class AuthService {
           .pipe(timeout(5000)),
       );
 
-      this.logger.debug(
-        'Received check session response from auth service',
-        session,
-      );
+      this.logger.debug('Received check session response from auth service');
 
       return session;
     } catch (error) {
