@@ -7,7 +7,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Message } from '../interfaces/messages.interface';
+import { Message, MessageTypes } from '../interfaces/messages.interface';
 import { UseGuards } from '@nestjs/common';
 import { WsAuthGuard } from 'src/guards/auth.guard';
 import { WsAuthService } from 'src/services/ws-auth.service';
@@ -27,16 +27,34 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(private readonly wsAuthService: WsAuthService) {}
 
-  handleConnection(@ConnectedSocket() client: Socket) {
-    this.wsAuthService.onClientConnect(client);
+  async handleConnection(@ConnectedSocket() client: Socket) {
+    await this.wsAuthService.onClientConnect(client);
+
+    // personal room
+    await this.subscribeToRoom(`u/${client.data.user.username}`, client);
+    // global room
+    await this.subscribeToRoom('global', client);
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket) {
     return client.disconnect();
   }
 
+  // handle messages
   @SubscribeMessage('message')
   async handleMessage(payload: Message) {
+    console.log('message', payload);
+
+    if (payload.type === MessageTypes.DIRECT) {
+      return this.sendToRoom(`u/${payload.toId}`, 'message', payload);
+    }
+
+    return 'Hello world!';
+  }
+
+  // handle session logouts
+  @SubscribeMessage('sessions')
+  async handleSession(payload: any) {
     console.log('message', payload);
     return 'Hello world!';
   }
@@ -46,17 +64,20 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async sendToRoom(room: string, event: string, data: any) {
+    const roomClients = await this.server.in(room).fetchSockets();
+    const usersInRoom = roomClients.map((client) => client.data.user);
+
     return this.server.to(room).emit(event, data);
   }
 
-  async sendToUser(
-    username: string,
-    event: string,
-    data: { from: string; [key: string]: any },
-    @ConnectedSocket() client: Socket,
-  ) {
-    return;
-  }
+  // async sendToUser(
+  //   username: string,
+  //   event: string,
+  //   data: { from: string; [key: string]: any },
+  //   @ConnectedSocket() client: Socket,
+  // ) {
+  //   return;
+  // }
 
   // async sendToUser(socketId: string, event: string, data: any) {
   //   return this.server.to(socketId).emit(event, data);
