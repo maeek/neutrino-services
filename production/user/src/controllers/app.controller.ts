@@ -20,6 +20,7 @@ enum MESSAGE_PATTERNS {
   SET_SESSION_TO_USER = 'user.setSessionToUser',
   REMOVE_SESSION_FROM_USER = 'user.removeSessionFromUser',
   UPDATE_USER = 'user.updateUser',
+  GET_USERS_BY_IDS = 'user.getUsersByIds',
 }
 
 @Controller()
@@ -90,5 +91,10 @@ export class AppController {
   @MessagePattern(MESSAGE_PATTERNS.UPDATE_USER)
   async updateUser(@Body() body: any) {
     return this.appService.updateUser(body.id, body.data);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.GET_USERS_BY_IDS)
+  async getUsersByIds(@Body() body: any) {
+    return this.appService.getUsersByIds(body.ids);
   }
 }

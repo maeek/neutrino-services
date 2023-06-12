@@ -179,8 +179,8 @@ export class UsersLoggedResponseDto {
   @ApiProperty()
   role?: UserRole;
 
-  @Exclude()
-  supportedLoginTypes: string[];
+  @ApiProperty()
+  supportedLoginTypes: ('password' | 'webauthn')[];
 
   @ApiProperty()
   sessions: string[];

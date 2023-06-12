@@ -1,29 +1,27 @@
-import { CanActivate, Injectable } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { Socket } from 'socket.io';
+import { WsAuthService } from '../services/ws-auth.service';
 
 @Injectable()
 export class WsAuthGuard implements CanActivate {
-  // constructor(private readonly authService: AuthService) {}
+  constructor(private readonly wsAuthService: WsAuthService) {}
 
-  async canActivate(context: any): Promise<boolean | any> {
-    const bearerToken =
-      context.args[0].handshake.headers.authorization.split(' ')[1];
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
-      // const decoded = jwt.verify(bearerToken, jwtConstants.secret) as any;
-      // return new Promise((resolve, reject) => {
-      //   return this.userService
-      //     .findByUsername(decoded.username)
-      //     .then((user) => {
-      //       if (user) {
-      //         resolve(user);
-      //       } else {
-      //         reject(false);
-      //       }
-      //     });
-      // });
-    } catch (ex) {
-      console.log(ex);
+      const client = context.switchToWs().getClient<Socket>();
+
+      await this.wsAuthService.finishInitialization(client);
+
+      return !client.data.user.locked && client.data.user.verfied;
+    } catch (e) {
       return false;
+    }
+  }
+
+  extractJwtFromHeaders(headers: any) {
+    const authHeader = headers.authorization;
+    if (authHeader && authHeader.split(' ')[0] === 'Bearer') {
+      return authHeader.split(' ')[1];
     }
   }
 }

@@ -239,4 +239,12 @@ export class AppService implements OnModuleInit {
 
     return user.save();
   }
+
+  async getUsersByIds(ids: string[]) {
+    return this.usersRepository.find({
+      username: {
+        $in: ids,
+      },
+    });
+  }
 }

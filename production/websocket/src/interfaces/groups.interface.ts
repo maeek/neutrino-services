@@ -24,6 +24,9 @@ export class CreateGroupRequestDto {
 
   @IsOptional()
   blockedUsers?: string[];
+
+  @IsString()
+  owner: string;
 }
 
 export class UpdateGroupRequestDto {

@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   Res,
   UseGuards,
   UseInterceptors,
@@ -34,6 +35,7 @@ import { PaginationParams } from 'src/interfaces/validators/pagination';
 import { IDParams } from 'src/interfaces/validators/id';
 import { Response } from 'express';
 import { AuthGuard } from 'src/guards/jwt.guard';
+import { UserRole } from 'src/interfaces/user.interface';
 
 @Controller('messages')
 @UseGuards(AuthGuard)
@@ -58,9 +60,11 @@ export class MessageController {
   )
   @UseInterceptors(ClassSerializerInterceptor)
   async createGroup(
+    @Req() req,
     @Body() body: CreateGroupRequestDto,
   ): Promise<CreateGroupResponseDto> {
-    const createdGroup = await this.messageService.createGroup(body);
+    const user = req.user.username;
+    const createdGroup = await this.messageService.createGroup(body, user);
 
     return new CreateGroupResponseDto(createdGroup);
   }
@@ -115,10 +119,27 @@ export class MessageController {
   @ApiAcceptedResponse()
   @ApiNoContentResponse()
   @ApiTags('Messages')
-  async deleteGroupById(@Param() params: IDParams, @Res() res: Response) {
-    const status = await this.messageService.deleteGroupById(params.id);
+  async deleteGroupById(
+    @Req() req,
+    @Param() params: IDParams,
+    @Res() res: Response,
+  ) {
+    const user = req.user;
+    const channel = await this.messageService.getGroupById(params.id);
 
-    res.status(status ? HttpStatus.ACCEPTED : HttpStatus.NO_CONTENT).end();
+    if (user.role !== UserRole.ADMIN || channel.users[0] !== user.username) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: 'Forbidden',
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    await this.messageService.deleteGroupById(params.id);
+
+    res.status(HttpStatus.NO_CONTENT).end();
   }
 
   @Put('/groups/:id')

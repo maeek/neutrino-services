@@ -62,13 +62,17 @@ export class MessageService {
 
   async createGroup(
     channel: CreateGroupRequestDto,
+    user: string,
   ): Promise<CreateGroupResponseDto> {
     try {
       this.logger.debug('Sending create group to websocket service');
 
       const createdChannel = await firstValueFrom(
         this.messageServiceClient
-          .send<CreateGroupResponseDto>(MESSAGE_PATTERNS.CREATE_GROUP, channel)
+          .send<CreateGroupResponseDto>(MESSAGE_PATTERNS.CREATE_GROUP, {
+            ...channel,
+            owner: user,
+          })
           .pipe(timeout(5000)),
       );
 

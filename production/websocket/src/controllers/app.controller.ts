@@ -9,14 +9,15 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
-import { AppService } from '../services/app.service';
+import { MessagesService } from '../services/app.service';
 import {
   CreateGroupRequestDto,
   GetGroupById,
   GetGroupsRequestDto,
   PutUsersInGroupRequestDto,
   UpdateGroupRequestDto,
-} from '../interfaces/message.interface';
+} from '../interfaces/groups.interface';
+import { ChannelsMgmtService } from 'src/services/channels-mgmt.service';
 
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'websocket.getHealth',
@@ -31,7 +32,8 @@ enum MESSAGE_PATTERNS {
 @Controller()
 export class AppController {
   constructor(
-    private readonly appService: AppService,
+    private readonly appService: MessagesService,
+    private readonly channelsMgmtService: ChannelsMgmtService,
     private readonly logger: Logger,
   ) {}
 
@@ -40,20 +42,18 @@ export class AppController {
     return this.appService.getHealth();
   }
 
-  @Get('/health')
+  @Get('/ws/health')
   getHealthHttp() {
     return this.appService.getHealth();
-  }
-
-  @Post('/message/all')
-  async messageToAll() {
-    await this.appService.sendToAll('message', 'Hello from websocket');
   }
 
   @MessagePattern(MESSAGE_PATTERNS.CREATE_GROUP)
   async createGroup(@Body() body: CreateGroupRequestDto) {
     try {
-      const group = await this.appService.createGroup(body);
+      const group = await this.channelsMgmtService.createGroup(
+        body,
+        body.owner,
+      );
       return group;
     } catch (error) {
       this.logger.error(error);
@@ -67,31 +67,39 @@ export class AppController {
   @MessagePattern(MESSAGE_PATTERNS.GET_GROUPS)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async getGroups(@Body() body: GetGroupsRequestDto) {
-    return this.appService.getGroups(body.offset, body.limit, body.find);
+    return this.channelsMgmtService.getGroups(
+      body.offset,
+      body.limit,
+      body.find,
+    );
   }
 
   @MessagePattern(MESSAGE_PATTERNS.GET_GROUP_BY_ID)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async getGroupById(@Body() body: GetGroupById) {
-    return this.appService.getGroupById(body.id);
+    return this.channelsMgmtService.getGroupById(body.id);
   }
 
   @MessagePattern(MESSAGE_PATTERNS.UPDATE_GROUP_BY_ID)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async updateGroupById(@Body() { name, ...body }: UpdateGroupRequestDto) {
-    return this.appService.updateGroupById(name, body);
+    return this.channelsMgmtService.updateGroupById(name, body);
   }
 
   @MessagePattern(MESSAGE_PATTERNS.DELETE_GROUP_BY_ID)
   async deleteGroupById(@Body() body: GetGroupById) {
-    return this.appService.deleteGroupById(body.id);
+    return this.channelsMgmtService.deleteGroupById(body.id);
   }
 
   @MessagePattern(MESSAGE_PATTERNS.PUT_USERS_IN_GROUP_BY_ID)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async putUsersInGroupById(@Body() body: PutUsersInGroupRequestDto) {
     try {
-      await this.appService.putUsersInGroupById(body.id, body.list, body.ids);
+      await this.channelsMgmtService.putUsersInGroupById(
+        body.id,
+        body.list,
+        body.ids,
+      );
 
       return {
         statusCode: HttpStatus.OK,
