@@ -9,6 +9,7 @@ import { CredentialSchema } from './schemas/credentials.schema';
 import { UsersRepository } from './services/user.repository';
 import { ConfigService } from './services/config/config.service';
 import { ClientProxyFactory } from '@nestjs/microservices';
+import { ChatSettingsSchema } from './schemas/chat-settings.schema';
 
 @Module({
   imports: [
@@ -30,6 +31,11 @@ import { ClientProxyFactory } from '@nestjs/microservices';
         name: 'Credentials',
         schema: CredentialSchema,
         collection: 'credentials',
+      },
+      {
+        name: 'ChatSetting',
+        schema: ChatSettingsSchema,
+        collection: 'chat-settings',
       },
     ]),
   ],

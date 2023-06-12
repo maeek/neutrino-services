@@ -30,8 +30,11 @@ import { RegistrationGuard } from 'src/guards/registration.guard';
 import { isError } from 'src/interfaces/error.interface';
 import {
   CreateUserDto,
+  UpdateUserRequestDto,
   UserRole,
   UsersLoggedResponseDto,
+  UsersLoggedSetttingsChannelResponseDto,
+  UsersLoggedSetttingsResponseDto,
   UsersResponseDto,
 } from 'src/interfaces/user.interface';
 import { IDParams } from 'src/interfaces/validators/id';
@@ -78,7 +81,16 @@ export class UserController {
   @UseInterceptors(ClassSerializerInterceptor)
   async getLoggedUser(@Req() req) {
     const username = req.user.username;
-    return new UsersLoggedResponseDto(await this.userService.getUser(username));
+    const user = await this.userService.getUser(username);
+    return new UsersLoggedResponseDto({
+      ...user,
+      settings: new UsersLoggedSetttingsResponseDto({
+        ...user.settings,
+        chats: user.settings.chats.map(
+          (chat) => new UsersLoggedSetttingsChannelResponseDto(chat),
+        ),
+      }),
+    });
   }
 
   @Get('/:id')
@@ -139,14 +151,44 @@ export class UserController {
   @Put('/:id')
   @ApiOperation({ summary: 'Update user by id' })
   @ApiTags('Users')
-  async updateUser(@Param() params: IDParams, @Body() body: any) {
-    console.log(body);
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    }),
+  )
+  async updateUser(
+    @Req() req,
+    @Param() params: IDParams,
+    @Body() body: UpdateUserRequestDto,
+  ) {
+    const loggedUser = req.user;
+    if (
+      loggedUser.role !== UserRole.ADMIN &&
+      loggedUser.username !== params.id
+    ) {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.FORBIDDEN,
+          error: 'Forbidden',
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
 
     const user = await this.userService.updateUser(params.id, body);
-
-    console.log(user);
-
-    return {};
+    return loggedUser.username === params.id
+      ? new UsersLoggedResponseDto({
+          ...user,
+          settings: new UsersLoggedSetttingsResponseDto({
+            ...user.settings,
+            chats: user.settings.chats.map(
+              (chat) => new UsersLoggedSetttingsChannelResponseDto(chat),
+            ),
+          }),
+        })
+      : new UsersResponseDto(user);
   }
 
   @Put('/:id/avatar')
@@ -178,6 +220,7 @@ export class UserController {
       );
       await this.userService.updateUser(params.id, {
         avatar: avatar.split('/').pop(),
+        updateAvatar: true,
       });
     }
 

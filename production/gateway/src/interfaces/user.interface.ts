@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsStrongPassword,
 } from 'class-validator';
@@ -102,6 +103,69 @@ export class UsersResponseDto {
   }
 }
 
+export class UpdateUserRequestDto {
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  currentPassword?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  password?: string;
+
+  @ApiProperty()
+  @IsString()
+  description?: string;
+
+  @ApiProperty()
+  @IsString({ each: true })
+  @IsOptional()
+  mutedUsers?: string[];
+
+  @ApiProperty()
+  @IsString({ each: true })
+  @IsOptional()
+  mutedChannels?: string[];
+
+  constructor(partial: Partial<UpdateUserRequestDto>) {
+    Object.assign(this, partial);
+  }
+}
+
+export class UsersLoggedSetttingsChannelResponseDto {
+  @Exclude()
+  id: string;
+
+  @ApiProperty()
+  channel: string;
+
+  @ApiProperty()
+  muted: boolean;
+
+  @ApiProperty()
+  color: string;
+
+  constructor(partial: Partial<UsersLoggedSetttingsResponseDto>) {
+    Object.assign(this, partial);
+  }
+}
+
+export class UsersLoggedSetttingsResponseDto {
+  @Exclude()
+  id: string;
+
+  @ApiProperty()
+  mutedUsers: string[];
+
+  @ApiProperty()
+  chats: Record<string, unknown>[];
+
+  constructor(partial: Partial<UsersLoggedSetttingsResponseDto>) {
+    Object.assign(this, partial);
+  }
+}
+
 export class UsersLoggedResponseDto {
   @Exclude()
   id: string;
@@ -131,7 +195,7 @@ export class UsersLoggedResponseDto {
   credentials: Record<string, unknown>[];
 
   @ApiProperty()
-  settings: Record<string, unknown>;
+  settings: UsersLoggedSetttingsResponseDto;
 
   @ApiProperty()
   avatar: string;

@@ -1,7 +1,7 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from './config/config.service';
 import { UsersRepository } from './user.repository';
-import { User, UserRole } from '../schemas/users.schema';
+import { User, UserDocument, UserRole } from '../schemas/users.schema';
 import * as bcrypt from 'bcryptjs';
 import {
   CreateUserRequestDto,
@@ -64,7 +64,7 @@ export class AppService implements OnModuleInit {
     };
   }
 
-  async getUser(username: string): Promise<User> {
+  async getUser(username: string): Promise<UserDocument> {
     return this.usersRepository.findOne({ username });
   }
 
@@ -180,9 +180,12 @@ export class AppService implements OnModuleInit {
     username: string,
     body: {
       description?: string;
+      updateAvatar?: boolean;
       avatar?: string;
       currentPassword?: string;
       password?: string;
+      mutedUsers?: string[];
+      mutedChannels?: string[];
     },
   ) {
     if (body.currentPassword && body.password) {
@@ -200,7 +203,7 @@ export class AppService implements OnModuleInit {
       );
       const passwordHash = await bcrypt.hash(body.password, passwordSalt);
 
-      return this.usersRepository.findOneAndUpdate(
+      await this.usersRepository.findOneAndUpdate(
         { username },
         {
           $set: {
@@ -210,14 +213,30 @@ export class AppService implements OnModuleInit {
       );
     }
 
-    return this.usersRepository.findOneAndUpdate(
-      { username },
-      {
-        $set: {
-          description: body.description,
-          avatar: body.avatar,
-        },
-      },
-    );
+    const user = await this.getUser(username);
+
+    if (body.mutedUsers) {
+      user.settings.mutedUsers = body.mutedUsers;
+      user.markModified('settings');
+    }
+
+    if (body.mutedChannels) {
+      user.settings.chats = body.mutedChannels.map((channel) => ({
+        channel,
+        muted: true,
+        color: null,
+      }));
+      user.markModified('settings');
+    }
+
+    user.description = body.description;
+    user.markModified('description');
+
+    if (body.updateAvatar) {
+      user.avatar = body.avatar;
+      user.markModified('avatar');
+    }
+
+    return user.save();
   }
 }

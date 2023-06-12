@@ -128,7 +128,15 @@ export class UserService {
 
   async updateUser(
     username: string,
-    data: { description?: string; avatar?: string },
+    data: {
+      description?: string;
+      avatar?: string;
+      updateAvatar?: boolean;
+      currentPassword?: string;
+      password?: string;
+      mutedUsers?: string[];
+      mutedChannels?: string[];
+    },
   ) {
     try {
       const user = await firstValueFrom(

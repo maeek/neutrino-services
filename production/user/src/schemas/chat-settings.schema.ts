@@ -1,15 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { ChatSetting, ChatSettingsSchema } from './chat-settings.schema';
 
-export type SettingsDocument = HydratedDocument<Settings>;
+export type ChatSettingsDocument = HydratedDocument<ChatSetting>;
 
 function transformValue(_doc, ret: { [key: string]: any }) {
   delete ret._id;
 }
 
 @Schema({
-  collection: 'settings',
+  collection: 'chat-settings',
   toJSON: {
     virtuals: true,
     versionKey: false,
@@ -21,17 +20,21 @@ function transformValue(_doc, ret: { [key: string]: any }) {
     transform: transformValue,
   },
 })
-export class Settings {
+export class ChatSetting {
   @Prop({
-    type: [String],
+    type: String,
   })
-  mutedUsers: string[];
+  channel: string;
 
   @Prop({
-    type: [ChatSettingsSchema],
-    default: [],
+    type: Boolean,
   })
-  chats: ChatSetting[];
+  muted: boolean;
+
+  @Prop({
+    type: String,
+  })
+  color: string;
 }
 
-export const SettingsSchema = SchemaFactory.createForClass(Settings);
+export const ChatSettingsSchema = SchemaFactory.createForClass(ChatSetting);
