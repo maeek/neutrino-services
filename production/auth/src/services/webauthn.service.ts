@@ -27,7 +27,7 @@ export class WebAuthnService {
   ) {}
 
   async getUserAuthenticators(username: string) {
-    const { credentials } = await firstValueFrom(
+    const user = await firstValueFrom(
       this.userServiceClient
         .send<{
           credentials: {
@@ -42,13 +42,15 @@ export class WebAuthnService {
         .pipe(timeout(5000)),
     );
 
-    return credentials.map((authenticator) => ({
-      id: Buffer.from(authenticator.credentialId, 'utf-8'),
-      publicKey: Buffer.from(authenticator.publicKey, 'utf-8'),
-      counter: authenticator.counter,
-      type: 'public-key',
-      transports: authenticator.transports,
-    }));
+    return (
+      user?.credentials.map((authenticator) => ({
+        id: Buffer.from(authenticator.credentialId, 'utf-8'),
+        publicKey: Buffer.from(authenticator.publicKey, 'utf-8'),
+        counter: authenticator.counter,
+        type: 'public-key',
+        transports: authenticator.transports,
+      })) || []
+    );
   }
 
   async generateRegistrationOptions(username: string) {
@@ -91,6 +93,8 @@ export class WebAuthnService {
         expectedOrigin: this.configService.get('WEBAUTHN_ORIGIN'),
         expectedRPID: this.configService.get('WEBAUTHN_RPID'),
       });
+
+      console.log('webauthnservice', verification);
 
       return verification;
     } catch (error) {

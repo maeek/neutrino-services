@@ -12,8 +12,13 @@ export class WsAuthGuard implements CanActivate {
 
       await this.wsAuthService.finishInitialization(client);
 
-      return !client.data.user.locked && client.data.user.verfied;
+      if (!client.data?.user?.verified || client.data?.user?.locked) {
+        throw new Error('User not verified');
+      }
+
+      return true;
     } catch (e) {
+      console.error('WsAuthGuard authentication failed', e);
       return false;
     }
   }

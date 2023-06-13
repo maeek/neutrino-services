@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { AuthService } from './auth.service';
+import { ChannelsMgmtService } from './channels-mgmt.service';
 
 // https://github.com/nestjs/nest/issues/882#issuecomment-1493106283
 @Injectable()
 export class WsAuthService {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly channelsService: ChannelsMgmtService,
+  ) {}
 
   private initializationMap = new Map<string, Promise<any>>();
 
@@ -33,6 +37,7 @@ export class WsAuthService {
       );
 
       socket.data.user = {
+        id: session.user.id,
         verified: session.verified,
         locked: !!session.user.locked,
         sessionId: session.refreshToken?.id,
@@ -43,10 +48,22 @@ export class WsAuthService {
           ?.filter((c) => c.muted)
           .map((c) => c.channel),
       };
+
+      socket.join(`u/${socket.data.user.username}`);
+      socket.join('global');
+
+      const channelsThatUserIsIn = await this.channelsService.getGroupsWithUser(
+        socket.data.user.id,
+      );
+
+      channelsThatUserIsIn.forEach((channel) => {
+        socket.join(`c/${channel.name}`);
+      });
     } catch (e) {
-      socket.disconnect();
+      await socket.disconnect();
     } finally {
       this.initializationMap.delete(socket.id);
+      return socket;
     }
   }
 }

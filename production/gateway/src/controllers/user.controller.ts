@@ -43,7 +43,6 @@ import { FileService } from 'src/services/file.service';
 import { UserService } from 'src/services/user.service';
 
 @Controller('users')
-@UseGuards(AuthGuard)
 export class UserController {
   constructor(
     private readonly userService: UserService,
@@ -61,6 +60,7 @@ export class UserController {
   @ApiTags('Users')
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(AuthGuard)
   async getUsers(@Query() query: PaginationParams) {
     const response = await this.userService.getUsers(
       query.offset,
@@ -79,6 +79,7 @@ export class UserController {
   @ApiTags('Users')
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(AuthGuard)
   async getLoggedUser(@Req() req) {
     const username = req.user.username;
     const user = await this.userService.getUser(username);
@@ -96,6 +97,7 @@ export class UserController {
   @Get('/:id')
   @ApiOperation({ summary: 'Get user by id' })
   @ApiTags('Users')
+  @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   async getUser(@Param('id') id: string) {
     const user = await this.userService.getUser(id);
@@ -118,6 +120,7 @@ export class UserController {
   @Post('/')
   @ApiOperation({ summary: 'Create user' })
   @ApiTags('Users')
+  @UseGuards(AuthGuard)
   @UsePipes(
     new ValidationPipe({
       transform: true,
@@ -152,6 +155,7 @@ export class UserController {
   @ApiOperation({ summary: 'Update user by id' })
   @ApiTags('Users')
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(AuthGuard)
   @UsePipes(
     new ValidationPipe({
       transform: true,
@@ -194,6 +198,7 @@ export class UserController {
   @Put('/:id/avatar')
   @ApiOperation({ summary: 'Update user by id' })
   @ApiTags('Users')
+  @UseGuards(AuthGuard)
   @UseInterceptors(FileInterceptor('file'))
   async updateUserAvatar(
     @Param() params: IDParams,
@@ -229,6 +234,7 @@ export class UserController {
 
   @Delete('/:id')
   @ApiOperation({ summary: 'Delete user by id' })
+  @UseGuards(AuthGuard)
   @ApiTags('Users')
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async removeUserById(

@@ -74,12 +74,19 @@ export class AuthController {
     }
   }
 
-  // @Post('/login/challenge')
-  // @ApiOperation({ summary: 'Login with WebAuthn' })
-  // @ApiTags('Authentication')
-  // async loginChallenge() {
-  //   return {};
-  // }
+  @Post('/webauthn/options')
+  @ApiOperation({ summary: 'WebAuthn registration options' })
+  @ApiTags('Authentication')
+  async webAuthnRegOptions(@Body() body: { username: string }) {
+    return this.authService.generateRegistrationOptions(body.username);
+  }
+
+  @Post('/registration/webauthn')
+  @ApiOperation({ summary: 'WebAuthn registration options' })
+  @ApiTags('Authentication')
+  async webAuthnRegVerify(@Body() body: { username: string; webauthn: any }) {
+    return this.authService.verifyRegistration(body.username, body.webauthn);
+  }
 
   // @Post('/login/challenge-verify')
   // @ApiOperation({ summary: 'Login with WebAuthn' })

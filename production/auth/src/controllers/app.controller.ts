@@ -5,6 +5,7 @@ import { LoginRequestDto } from 'src/interfaces/login.interface';
 import { LogoutRequestDto } from 'src/interfaces/logout.interface';
 import { GetSessionAndRenewRequestDto } from 'src/interfaces/get-session.interface';
 import { GetSessionsRequestDto } from 'src/interfaces/get-sessions.interface';
+import { WebAuthnService } from 'src/services/webauthn.service';
 
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'auth.getHealth',
@@ -20,11 +21,16 @@ enum MESSAGE_PATTERNS {
   LOGOUT = 'auth.logout',
   LOGOUT_SESSIONS = 'auth.logoutSessions',
   LOGOUT_ALL_SESSIONS = 'auth.logoutAllSessions',
+  WEBAUTHN_GEN_REG_OPTS = 'auth.loginWebAuthnGenRegOpts',
+  WEBAUTH_VERIFY_REG = 'auth.loginWebAuthnVerifyReg',
 }
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly webauthnService: WebAuthnService,
+  ) {}
 
   @MessagePattern(MESSAGE_PATTERNS.GET_HEALTH)
   async getHealth() {
@@ -91,6 +97,21 @@ export class AppController {
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async logoutAllSessions(@Body() body: LogoutRequestDto) {
     return this.appService.logoutAllSession(body.username);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.WEBAUTHN_GEN_REG_OPTS)
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async webAuthnGenRegOpts(@Body() body: LogoutRequestDto) {
+    return this.webauthnService.generateRegistrationOptions(body.username);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.WEBAUTH_VERIFY_REG)
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async webAuthnVerifyReg(@Body() body: any) {
+    return this.webauthnService.verifyRegistration(
+      body.username,
+      body.webauthn,
+    );
   }
 
   // @MessagePattern(MESSAGE_PATTERNS.CREATE_WEBAUTHN_OPTIONS)

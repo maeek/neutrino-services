@@ -12,6 +12,8 @@ import { StandardErrorResponse } from 'src/interfaces/error.interface';
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'auth.getHealth',
   LOGIN = 'auth.login',
+  WEBAUTHN_GEN_REG_OPTS = 'auth.loginWebAuthnGenRegOpts',
+  WEBAUTH_VERIFY_REG = 'auth.loginWebAuthnVerifyReg',
   LOGIN_WEBAUTHN = 'auth.loginWebAuthn',
   LOGIN_WEBAUTHN_VERIFY = 'auth.loginWebAuthnVerify',
   GET_SESSION_AND_RENEW = 'auth.getSessionAndRenew',
@@ -160,6 +162,63 @@ export class AuthService {
     } catch (error) {
       this.logger.error(error);
       return [];
+    }
+  }
+
+  async generateRegistrationOptions(username: string) {
+    try {
+      this.logger.debug(
+        'Sending generate registration options request to auth service',
+      );
+
+      const registrationOptions = await firstValueFrom(
+        this.authServiceClient
+          .send<any>(MESSAGE_PATTERNS.WEBAUTHN_GEN_REG_OPTS, {
+            username,
+          })
+          .pipe(timeout(5000)),
+      );
+
+      this.logger.debug(
+        'Received generate registration options response from auth service',
+      );
+
+      return registrationOptions;
+    } catch (error) {
+      this.logger.error(error);
+      return {};
+    }
+  }
+
+  async verifyRegistration(username: string, body: any) {
+    try {
+      this.logger.debug('Sending verify registration request to auth service');
+
+      const verified = await firstValueFrom(
+        this.authServiceClient
+          .send<any>(MESSAGE_PATTERNS.WEBAUTH_VERIFY_REG, {
+            username,
+            body,
+          })
+          .pipe(timeout(5000)),
+      );
+
+      this.logger.debug(
+        'Received verify registration response from auth service',
+      );
+
+      console.log(verified);
+
+      if (!verified?.verified) {
+        throw new Error('Could not verify registration');
+      }
+
+      // await this.userService.updateUser(username, {
+
+      return verified;
+    } catch (error) {
+      this.logger.error(error);
+      return false;
     }
   }
 }

@@ -7,7 +7,7 @@ enum MESSAGE_PATTERNS {
 }
 
 interface User {
-  _id: string;
+  id: string;
   username: string;
 }
 
@@ -28,6 +28,7 @@ export class UserService {
 
   async getUsersObjectIdsByIds(ids: string[]) {
     const users = await this.getUsersByIds(ids);
-    return users.map((user) => user._id);
+    console.log(users);
+    return users.map((user) => user.id);
   }
 }

@@ -3,14 +3,12 @@ import {
   CreateGroupRequestDto,
   UpdateGroupRequestDto,
 } from '../interfaces/groups.interface';
-import { SocketGateway } from '../socket/socket.gateway';
 import { ChannelsRepository } from './channel.repository';
 import { UserService } from './user.service';
 
 @Injectable()
 export class ChannelsMgmtService {
   constructor(
-    // private readonly socketGateway: SocketGateway,
     private readonly channelRepository: ChannelsRepository,
     private readonly userService: UserService,
   ) {}
@@ -24,7 +22,7 @@ export class ChannelsMgmtService {
   async createGroup(body: CreateGroupRequestDto, owner?: string) {
     const users = await this.userService.getUsersObjectIdsByIds([
       owner,
-      ...body.users,
+      ...(body?.users || []),
     ]);
     const blockedUsers = body.blockedUsers
       ? await this.userService.getUsersObjectIdsByIds(body.blockedUsers)
@@ -75,6 +73,14 @@ export class ChannelsMgmtService {
 
   async getGroupById(id: string) {
     return this.channelRepository.findOne({ name: id });
+  }
+
+  async getGroupsWithUser(user: string) {
+    return this.channelRepository.find({
+      users: {
+        $in: [user],
+      },
+    });
   }
 
   async updateGroupById(

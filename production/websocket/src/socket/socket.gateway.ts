@@ -1,5 +1,6 @@
 import {
   ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
   SubscribeMessage,
@@ -11,7 +12,7 @@ import { Message, MessageTypes } from '../interfaces/messages.interface';
 import { UseGuards } from '@nestjs/common';
 import { WsAuthGuard } from 'src/guards/auth.guard';
 import { WsAuthService } from 'src/services/ws-auth.service';
-import { from } from 'rxjs';
+import { ChannelsMgmtService } from 'src/services/channels-mgmt.service';
 
 @WebSocketGateway({
   path: '/ws',
@@ -25,15 +26,13 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   private server: Server;
 
-  constructor(private readonly wsAuthService: WsAuthService) {}
+  constructor(
+    private readonly wsAuthService: WsAuthService,
+    private readonly channelsService: ChannelsMgmtService,
+  ) {}
 
   async handleConnection(@ConnectedSocket() client: Socket) {
-    await this.wsAuthService.onClientConnect(client);
-
-    // personal room
-    await this.subscribeToRoom(`u/${client.data.user.username}`, client);
-    // global room
-    await this.subscribeToRoom('global', client);
+    this.wsAuthService.onClientConnect(client);
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket) {
@@ -42,14 +41,33 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // handle messages
   @SubscribeMessage('message')
-  async handleMessage(payload: Message) {
+  async handleMessage(
+    @MessageBody() payload: Message,
+    @ConnectedSocket() client: Socket,
+  ) {
     console.log('message', payload);
 
     if (payload.type === MessageTypes.DIRECT) {
-      return this.sendToRoom(`u/${payload.toId}`, 'message', payload);
+      return this.sendToRoom(
+        `u/${payload.toId}`,
+        'message',
+        {
+          ...payload,
+          fromId: client.data.user.username,
+        },
+        client,
+      );
+    } else if (payload.type === MessageTypes.CHANNEL) {
+      return this.sendToRoom(
+        `c/${payload.toId}`,
+        'message',
+        {
+          ...payload,
+          fromId: client.data.user.username,
+        },
+        client,
+      );
     }
-
-    return 'Hello world!';
   }
 
   // handle session logouts
@@ -59,15 +77,24 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return 'Hello world!';
   }
 
-  async subscribeToRoom(room: string, @ConnectedSocket() client: Socket) {
-    return client.join(room);
-  }
-
-  async sendToRoom(room: string, event: string, data: any) {
+  async sendToRoom(
+    room: string,
+    event: string,
+    data: Message,
+    senderSocket?: Socket,
+  ) {
     const roomClients = await this.server.in(room).fetchSockets();
-    const usersInRoom = roomClients.map((client) => client.data.user);
+    const usersWithoutSenderMuted = roomClients.filter(
+      (client) => !client.data.user.muted?.includes(data.fromId),
+    );
 
-    return this.server.to(room).emit(event, data);
+    return Promise.all(
+      usersWithoutSenderMuted
+        .filter((client) => client.id !== senderSocket?.id)
+        .map((client) =>
+          this.server.to(`u/${client.data.user.username}`).emit(event, data),
+        ),
+    );
   }
 
   // async sendToUser(
