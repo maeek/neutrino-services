@@ -148,17 +148,17 @@ services:
     ports:
       - 27017:27017
 
-  mongo-express:
-    image: mongo-express
-    hostname: mongo-express
-    environment:
-      ME_CONFIG_MONGODB_URL: ${MOGNO_ROOT_DSN}
-      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USER}
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD}
-    env_file:
-      - ../.env
-    ports:
-      - 8088:8081
-    restart: unless-stopped
-    depends_on:
-      - db
+  # mongo-express:
+  #   image: mongo-express
+  #   hostname: mongo-express
+  #   environment:
+  #     ME_CONFIG_MONGODB_URL: ${MOGNO_ROOT_DSN}
+  #     ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USER}
+  #     ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD}
+  #   env_file:
+  #     - ../.env
+  #   ports:
+  #     - 8088:8081
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - db
