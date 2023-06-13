@@ -20,20 +20,17 @@ export class WebAuthnRequestResponseDto {
 }
 
 export class WebAuthnRequestDto {
-  @IsBase64()
-  id: string;
-
-  @IsBase64()
-  rawId: string;
+  @IsString()
+  credentialId: string;
 
   @IsString()
-  authenticatorAttachment: string;
+  publicKey: string;
+
+  @IsString({ each: true })
+  transports: string[];
 
   @IsString()
-  type: string;
-
-  @IsObject()
-  response: WebAuthnRequestResponseDto;
+  counter: number;
 }
 
 export class CreateUserRequestDto {

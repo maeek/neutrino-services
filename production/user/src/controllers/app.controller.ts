@@ -21,6 +21,7 @@ enum MESSAGE_PATTERNS {
   REMOVE_SESSION_FROM_USER = 'user.removeSessionFromUser',
   UPDATE_USER = 'user.updateUser',
   GET_USERS_BY_IDS = 'user.getUsersByIds',
+  CREATE_USER_FROM_WEBAUTHN = 'user.createUserFromWebAuthn',
 }
 
 @Controller()

@@ -113,7 +113,7 @@ export class WebAuthnService {
       return {
         verified: verification.verified,
         credentialId,
-        credentialPublicKey,
+        publicKey: credentialPublicKey,
         transports: body.response.transports,
         signCount: verification.registrationInfo.counter,
       };

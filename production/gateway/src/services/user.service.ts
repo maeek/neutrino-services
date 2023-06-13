@@ -5,6 +5,8 @@ import { StandardErrorResponse } from 'src/interfaces/error.interface';
 import {
   CreateUserDto,
   CreateUserResponseDto,
+  CreateUserWebAuthnDto,
+  UserRole,
 } from 'src/interfaces/user.interface';
 
 enum MESSAGE_PATTERNS {
@@ -107,12 +109,50 @@ export class UserService {
   }
 
   async createUser(
-    userPayload: CreateUserDto,
+    userPayload: CreateUserDto | CreateUserWebAuthnDto,
   ): Promise<CreateUserResponseDto | StandardErrorResponse> {
     try {
       const user = await firstValueFrom(
         this.userServiceClient
-          .send<CreateUserResponseDto>('user.createUser', userPayload)
+          .send<CreateUserResponseDto>(
+            MESSAGE_PATTERNS.CREATE_USER,
+            userPayload,
+          )
+          .pipe(timeout(5000)),
+      );
+
+      return user;
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        statusCode: HttpStatus.FORBIDDEN,
+        error: error.message,
+      };
+    }
+  }
+
+  async createUserFromWebAuthn(userPayload: {
+    username: string;
+    credential: {
+      credentialId: string;
+      publicKey: string;
+      counter: number;
+      transports: string[];
+    };
+  }): Promise<CreateUserResponseDto | StandardErrorResponse> {
+    try {
+      const user = await firstValueFrom(
+        this.userServiceClient
+          .send<CreateUserResponseDto>(MESSAGE_PATTERNS.CREATE_USER, {
+            username: userPayload.username,
+            role: UserRole.USER,
+            webAuthn: {
+              credentialId: userPayload.credential.credentialId,
+              publicKey: userPayload.credential.publicKey,
+              counter: userPayload.credential.counter,
+              transports: userPayload.credential.transports,
+            },
+          })
           .pipe(timeout(5000)),
       );
 

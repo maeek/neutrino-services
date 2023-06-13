@@ -23,7 +23,12 @@ import {
 import { UserService } from '../services/user.service';
 import { Response } from 'express';
 import { isError } from '../interfaces/error.interface';
-import { SelfUserResponseDto } from '../interfaces/user.interface';
+import {
+  SelfUserResponseDto,
+  UsersLoggedResponseDto,
+  UsersLoggedSetttingsChannelResponseDto,
+  UsersLoggedSetttingsResponseDto,
+} from '../interfaces/user.interface';
 import { instanceToPlain } from 'class-transformer';
 import { AuthGuard } from 'src/guards/jwt.guard';
 
@@ -84,8 +89,27 @@ export class AuthController {
   @Post('/registration/webauthn')
   @ApiOperation({ summary: 'WebAuthn registration options' })
   @ApiTags('Authentication')
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    }),
+  )
   async webAuthnRegVerify(@Body() body: { username: string; webauthn: any }) {
-    return this.authService.verifyRegistration(body.username, body.webauthn);
+    await this.authService.verifyRegistration(body.username, body.webauthn);
+
+    const user = await this.userService.getUser(body.username);
+
+    return new UsersLoggedResponseDto({
+      ...user,
+      settings: new UsersLoggedSetttingsResponseDto({
+        ...user?.settings,
+        chats: user?.settings?.chats?.map(
+          (chat) => new UsersLoggedSetttingsChannelResponseDto(chat),
+        ),
+      }),
+    });
   }
 
   // @Post('/login/challenge-verify')

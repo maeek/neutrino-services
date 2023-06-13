@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEnum,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   IsStrongPassword,
@@ -27,6 +28,39 @@ export class CreateUserDto {
   @ApiProperty()
   @IsStrongPassword()
   password?: string;
+
+  @ApiProperty()
+  @IsEnum(UserRole)
+  role?: string;
+}
+
+export class WebAuthnRequestDto {
+  @IsString()
+  credentialId: string;
+
+  @IsString()
+  publicKey: string;
+
+  @IsString({ each: true })
+  transports: string[];
+
+  @IsString()
+  counter: number;
+}
+
+export class CreateUserWebAuthnDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  username: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsOneOf(['password', 'webauthn'])
+  method?: 'password' | 'webauthn';
+
+  @IsOptional()
+  @IsObject()
+  webauthn?: WebAuthnRequestDto;
 
   @ApiProperty()
   @IsEnum(UserRole)

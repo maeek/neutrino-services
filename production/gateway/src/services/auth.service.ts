@@ -6,8 +6,9 @@ import {
   LoginResponseDto,
   SessionResponse,
 } from '../interfaces/auth.interface';
-import { UsersResponseDto } from '../interfaces/user.interface';
+import { UserRole, UsersResponseDto } from '../interfaces/user.interface';
 import { StandardErrorResponse } from 'src/interfaces/error.interface';
+import { UserService } from './user.service';
 
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'auth.getHealth',
@@ -28,6 +29,7 @@ export class AuthService {
     @Inject('AUTH_SERVICE')
     private readonly authServiceClient: ClientProxy,
     private readonly logger: Logger,
+    private readonly userService: UserService,
   ) {}
 
   async getHealth() {
@@ -213,9 +215,14 @@ export class AuthService {
         throw new Error('Could not verify registration');
       }
 
-      // await this.userService.createUser();
+      const newUser = await this.userService.createUser({
+        username,
+        method: 'webauthn',
+        role: UserRole.USER,
+        webauthn: verified,
+      });
 
-      return verified;
+      return newUser;
     } catch (error) {
       this.logger.error(error);
       return false;

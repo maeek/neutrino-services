@@ -1,7 +1,12 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from './config/config.service';
 import { UsersRepository } from './user.repository';
-import { User, UserDocument, UserRole } from '../schemas/users.schema';
+import {
+  AccountLoginType,
+  User,
+  UserDocument,
+  UserRole,
+} from '../schemas/users.schema';
 import * as bcrypt from 'bcryptjs';
 import {
   CreateUserRequestDto,
@@ -84,7 +89,7 @@ export class AppService implements OnModuleInit {
         body.role,
       );
     } else if (body.method === 'webauthn') {
-      return this.createUserWithWebAuthn(
+      return this.createUserFromWebAuthn(
         body.username,
         body.webauthn,
         body.role,
@@ -108,17 +113,33 @@ export class AppService implements OnModuleInit {
       username,
       hash: passwordHash,
       role,
+      supportedLoginTypes: [AccountLoginType.STANDARD],
     });
 
     return user;
   }
 
-  async createUserWithWebAuthn(
+  async createUserFromWebAuthn(
     username: string,
     webAuthnRequest: WebAuthnRequestDto,
     role: string,
   ) {
-    return {};
+    const user = await this.usersRepository.create({
+      username,
+      role,
+      supportedLoginTypes: [AccountLoginType.WEBAUTHN],
+      credentials: [
+        {
+          credentialId: webAuthnRequest.credentialId,
+          publicKey: webAuthnRequest.publicKey,
+          locked: false,
+          signCount: webAuthnRequest.counter,
+          createdAt: Date.now(),
+        },
+      ],
+    });
+
+    return user;
   }
 
   async removeUser(username: string): Promise<boolean> {
