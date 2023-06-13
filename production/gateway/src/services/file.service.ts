@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from './config/config.service';
 import * as fs from 'fs';
-import * as sharp from 'sharp';
+// import * as sharp from 'sharp';
 
 @Injectable()
 export class FileService implements OnModuleInit {
@@ -24,19 +24,20 @@ export class FileService implements OnModuleInit {
 
   async compressImage(file: Express.Multer.File) {
     try {
-      return sharp(file.buffer)
-        .resize(400, 400, {
-          fit: 'cover',
-          position: 'north',
-          withoutEnlargement: true,
-        })
-        .png({
-          compressionLevel: 9,
-          quality: 50,
-          palette: true,
-          force: true,
-        })
-        .toBuffer();
+      // return sharp(file.buffer)
+      //   .resize(400, 400, {
+      //     fit: 'cover',
+      //     position: 'north',
+      //     withoutEnlargement: true,
+      //   })
+      //   .png({
+      //     compressionLevel: 9,
+      //     quality: 50,
+      //     palette: true,
+      //     force: true,
+      //   })
+      //   .toBuffer();
+      return file.buffer;
     } catch (error) {
       console.error(error);
     }
