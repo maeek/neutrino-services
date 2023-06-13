@@ -62,9 +62,7 @@ export class WebAuthnService {
       userDisplayName: username,
       timeout: 60000,
       attestationType: 'none',
-      excludeCredentials: (await this.getUserAuthenticators(
-        username,
-      )) as PublicKeyCredentialDescriptorFuture[],
+      excludeCredentials: [],
       authenticatorSelection: {
         residentKey: 'discouraged',
         userVerification: 'required',
@@ -73,10 +71,17 @@ export class WebAuthnService {
        * Support the two most common algorithms: ES256, and RS256
        */
       supportedAlgorithmIDs: [-7, -257],
+      extensions: {
+        credProps: true,
+      },
     });
 
     // Store the challenge for later verification
-    await this.cacheManager.set(`authn-${username}`, options.challenge, 60000);
+    await this.cacheManager.set(
+      `challenge-${username}`,
+      options.challenge,
+      120000,
+    );
 
     return options;
   }
@@ -87,16 +92,31 @@ export class WebAuthnService {
       const expectedChallenge = await this.cacheManager.get<string>(
         `challenge-${username}`,
       );
+
       const verification = await verifyRegistrationResponse({
         response: body,
         expectedChallenge,
+        supportedAlgorithmIDs: [-7, -257],
         expectedOrigin: this.configService.get('WEBAUTHN_ORIGIN'),
         expectedRPID: this.configService.get('WEBAUTHN_RPID'),
       });
 
-      console.log('webauthnservice', verification);
+      const credentialId = Buffer.from(
+        verification.registrationInfo.credentialID,
+      ).toString('base64');
+      const credentialPublicKey = Buffer.from(
+        verification.registrationInfo.credentialPublicKey,
+      ).toString('base64');
 
-      return verification;
+      await this.cacheManager.del(`challenge-${username}`);
+
+      return {
+        verified: verification.verified,
+        credentialId,
+        credentialPublicKey,
+        transports: body.response.transports,
+        signCount: verification.registrationInfo.counter,
+      };
     } catch (error) {
       this.logger.error(error);
       return null;
@@ -109,11 +129,15 @@ export class WebAuthnService {
         username,
       )) as PublicKeyCredentialDescriptorFuture[],
       userVerification: 'required',
-      timeout: 60000,
+      timeout: 120000,
     });
 
     // Store the challenge for later verification
-    await this.cacheManager.set(`authn-${username}`, options.challenge, 60000);
+    await this.cacheManager.set(
+      `challenge-${username}`,
+      options.challenge,
+      60000,
+    );
 
     return options;
   }
@@ -127,7 +151,7 @@ export class WebAuthnService {
 
       // Retrieve the challenge from the cache
       const expectedChallenge = await this.cacheManager.get<string>(
-        `authn-${username}`,
+        `challenge-${username}`,
       );
       const verification = await verifyAuthenticationResponse({
         response: body,

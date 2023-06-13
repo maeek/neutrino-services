@@ -198,7 +198,7 @@ export class AuthService {
         this.authServiceClient
           .send<any>(MESSAGE_PATTERNS.WEBAUTH_VERIFY_REG, {
             username,
-            body,
+            webauthn: body,
           })
           .pipe(timeout(5000)),
       );
@@ -213,7 +213,7 @@ export class AuthService {
         throw new Error('Could not verify registration');
       }
 
-      // await this.userService.updateUser(username, {
+      // await this.userService.createUser();
 
       return verified;
     } catch (error) {
