@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 
+RUN npm install -g @nestjs/cli
 RUN npm install
 
 VOLUME [ "/app" ]
