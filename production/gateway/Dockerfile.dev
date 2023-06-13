@@ -5,7 +5,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 RUN npm install -g @nestjs/cli
-RUN SHARP_IGNORE_GLOBAL_LIBVIPS=1 npm install --arch=x64 --platform=linux sharp
+RUN npm rebuild --platform=linux --arch=x64 sharp
+RUN npm rebuild --platform=linux --arch=arm64 sharp
 RUN npm install
 
 VOLUME [ "/app" ]
