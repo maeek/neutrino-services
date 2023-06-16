@@ -3,7 +3,6 @@ import { ConfigService } from './config/config.service';
 import { UsersRepository } from './user.repository';
 import {
   AccountLoginType,
-  User,
   UserDocument,
   UserRole,
 } from '../schemas/users.schema';
@@ -159,7 +158,11 @@ export class AppService implements OnModuleInit {
     try {
       const user = await this.getUser(username);
 
-      if (!user) {
+      if (
+        !user ||
+        !user.supportedLoginTypes.includes(AccountLoginType.STANDARD) ||
+        !user.hash
+      ) {
         throw new Error('Invalid username or password');
       }
 
@@ -267,5 +270,13 @@ export class AppService implements OnModuleInit {
         $in: ids,
       },
     });
+  }
+
+  async checkIfCredentialIdExists(credentialId: string) {
+    const user = await this.usersRepository.findOne({
+      'credentials.credentialId': credentialId,
+    });
+
+    return !!user;
   }
 }

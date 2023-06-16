@@ -11,9 +11,11 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
 import { AuthenticationResponseJSON } from '@simplewebauthn/typescript-types';
 import { PublicKeyCredentialDescriptorFuture } from '@simplewebauthn/typescript-types';
+import { isoBase64URL } from '@simplewebauthn/server/helpers';
 
 enum USER_MESSAGE_PATTERNS {
   GET_USER = 'user.getUser',
+  CHECK_IF_CREDENTIAL_ID_EXISTS = 'user.checkIfCredentialIdExists',
 }
 
 @Injectable()
@@ -42,15 +44,29 @@ export class WebAuthnService {
         .pipe(timeout(5000)),
     );
 
+    console.log('user.credentials', user.credentials);
+
     return (
       user?.credentials.map((authenticator) => ({
-        id: Buffer.from(authenticator.credentialId, 'utf-8'),
-        publicKey: Buffer.from(authenticator.publicKey, 'utf-8'),
+        id: isoBase64URL.toBuffer(authenticator.credentialId),
+        publicKey: isoBase64URL.toBuffer(authenticator.publicKey),
         counter: authenticator.counter,
         type: 'public-key',
         transports: authenticator.transports,
       })) || []
     );
+  }
+
+  async checkIfCredentialIsAlreadyUsed(credentialId: string) {
+    const exists = await firstValueFrom(
+      this.userServiceClient
+        .send<boolean>(USER_MESSAGE_PATTERNS.CHECK_IF_CREDENTIAL_ID_EXISTS, {
+          credentialId,
+        })
+        .pipe(timeout(5000)),
+    );
+
+    return exists;
   }
 
   async generateRegistrationOptions(username: string) {
@@ -88,6 +104,14 @@ export class WebAuthnService {
 
   async verifyRegistration(username: string, body: any) {
     try {
+      const exists = await this.checkIfCredentialIsAlreadyUsed(body.id);
+
+      if (exists) {
+        return {
+          verified: false,
+        };
+      }
+
       // Retrieve the challenge from the cache
       const expectedChallenge = await this.cacheManager.get<string>(
         `challenge-${username}`,
@@ -101,25 +125,24 @@ export class WebAuthnService {
         expectedRPID: this.configService.get('WEBAUTHN_RPID'),
       });
 
-      const credentialId = Buffer.from(
-        verification.registrationInfo.credentialID,
-      ).toString('base64');
-      const credentialPublicKey = Buffer.from(
+      const credentialPublicKey = isoBase64URL.fromBuffer(
         verification.registrationInfo.credentialPublicKey,
-      ).toString('base64');
+      );
 
       await this.cacheManager.del(`challenge-${username}`);
 
       return {
         verified: verification.verified,
-        credentialId,
+        credentialId: body.id,
         publicKey: credentialPublicKey,
         transports: body.response.transports,
         signCount: verification.registrationInfo.counter,
       };
     } catch (error) {
       this.logger.error(error);
-      return null;
+      return {
+        verified: false,
+      };
     }
   }
 
@@ -130,6 +153,7 @@ export class WebAuthnService {
       )) as PublicKeyCredentialDescriptorFuture[],
       userVerification: 'required',
       timeout: 120000,
+      rpID: this.configService.get('WEBAUTHN_RPID'),
     });
 
     // Store the challenge for later verification

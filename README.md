@@ -10,6 +10,8 @@
 - [ ] webAuthn login
 - [ ] webAuthn prevent registering the same device
 - [ ] prevent registering the same user
+- [ ] error handling on login and register
 
 - [ ] logging
 - [ ] readme
+- [ ] haproxy setup final with frontend and backend

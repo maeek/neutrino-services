@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
   HttpStatus,
   Post,
   Req,
@@ -79,11 +80,82 @@ export class AuthController {
     }
   }
 
-  @Post('/webauthn/options')
+  @Post('/webauthn/reg-options')
   @ApiOperation({ summary: 'WebAuthn registration options' })
   @ApiTags('Authentication')
   async webAuthnRegOptions(@Body() body: { username: string }) {
-    return this.authService.generateRegistrationOptions(body.username);
+    const options = await this.authService.generateRegistrationOptions(
+      body.username,
+    );
+
+    if (isError(options)) {
+      throw new HttpException(options, HttpStatus.FORBIDDEN);
+    }
+
+    return options;
+  }
+
+  @Post('/webauthn/login-options')
+  @ApiOperation({ summary: 'WebAuthn login options' })
+  @ApiTags('Authentication')
+  async webAuthnLoginOptions(@Body() body: { username: string }) {
+    const options = await this.authService.generateLoginOptions(body.username);
+
+    if (isError(options)) {
+      throw new HttpException(options, HttpStatus.FORBIDDEN);
+    }
+
+    return options;
+  }
+
+  @Post('/login/webauthn')
+  @ApiOperation({ summary: 'WebAuthn login options' })
+  @ApiTags('Authentication')
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    }),
+  )
+  async webAuthnLoginVerify(
+    @Body() body: { username: string; webauthn: any },
+    @Res() res: Response,
+  ) {
+    await this.authService.verifyLogin(body.username, body.webauthn);
+
+    const user = await this.userService.getUser(body.username);
+    const userSession = await this.authService.createSessionForUser(user);
+
+    if (isError(userSession)) {
+      throw new HttpException(userSession, HttpStatus.FORBIDDEN);
+    }
+
+    res.cookie('chat-session', userSession.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      domain: process.env.COOKIE_DOMAIN,
+    });
+    res.setHeader('x-api-token', `Bearer ${userSession.accessToken}`);
+
+    res.json({
+      me: instanceToPlain(
+        new UsersLoggedResponseDto({
+          ...user,
+          settings: new UsersLoggedSetttingsResponseDto({
+            ...user?.settings,
+            chats: user?.settings?.chats?.map(
+              (channel) =>
+                new UsersLoggedSetttingsChannelResponseDto({
+                  ...channel,
+                  lastMessage: null,
+                }),
+            ),
+          }),
+        }),
+      ),
+    });
+    res.end();
   }
 
   @Post('/registration/webauthn')
@@ -96,28 +168,108 @@ export class AuthController {
       whitelist: true,
     }),
   )
-  async webAuthnRegVerify(@Body() body: { username: string; webauthn: any }) {
+  async webAuthnRegVerify(
+    @Body() body: { username: string; webauthn: any },
+    @Res() res: Response,
+  ) {
     await this.authService.verifyRegistration(body.username, body.webauthn);
 
     const user = await this.userService.getUser(body.username);
+    const userSession = await this.authService.createSessionForUser(user);
 
-    return new UsersLoggedResponseDto({
-      ...user,
-      settings: new UsersLoggedSetttingsResponseDto({
-        ...user?.settings,
-        chats: user?.settings?.chats?.map(
-          (chat) => new UsersLoggedSetttingsChannelResponseDto(chat),
-        ),
-      }),
+    if (isError(userSession)) {
+      throw new HttpException(userSession, HttpStatus.FORBIDDEN);
+    }
+
+    res.cookie('chat-session', userSession.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      domain: process.env.COOKIE_DOMAIN,
     });
+    res.setHeader('x-api-token', `Bearer ${userSession.accessToken}`);
+
+    res.json({
+      me: instanceToPlain(
+        new UsersLoggedResponseDto({
+          ...user,
+          settings: new UsersLoggedSetttingsResponseDto({
+            ...user?.settings,
+            chats: user?.settings?.chats?.map(
+              (chat) => new UsersLoggedSetttingsChannelResponseDto(chat),
+            ),
+          }),
+        }),
+      ),
+    });
+    res.end();
   }
 
-  // @Post('/login/challenge-verify')
-  // @ApiOperation({ summary: 'Login with WebAuthn' })
-  // @ApiTags('Authentication')
-  // async loginChallengeVerify() {
-  //   return {};
-  // }
+  @Post('/registration/')
+  @ApiOperation({ summary: 'WebAuthn registration options' })
+  @ApiTags('Authentication')
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    }),
+  )
+  async register(
+    @Body() body: { username: string; password: string },
+    @Res() res: Response,
+  ) {
+    const user = await this.userService.getUser(body.username);
+
+    if (!isError(user) && user.username) {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.FORBIDDEN,
+          message: 'Failed to register user',
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const newUser = await this.userService.createUser({
+      username: body.username,
+      password: body.password,
+      method: 'password',
+    });
+
+    if (isError(newUser)) {
+      throw new HttpException(newUser, HttpStatus.FORBIDDEN);
+    }
+
+    const userSession = await this.authService.createSessionForUser(
+      newUser as any,
+    );
+
+    if (isError(userSession)) {
+      throw new HttpException(userSession, HttpStatus.FORBIDDEN);
+    }
+
+    res.cookie('chat-session', userSession.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      domain: process.env.COOKIE_DOMAIN,
+    });
+    res.setHeader('x-api-token', `Bearer ${userSession.accessToken}`);
+
+    res.json({
+      me: instanceToPlain(
+        new UsersLoggedResponseDto({
+          ...user,
+          settings: new UsersLoggedSetttingsResponseDto({
+            ...user?.settings,
+            chats: user?.settings?.chats?.map(
+              (chat) => new UsersLoggedSetttingsChannelResponseDto(chat),
+            ),
+          }),
+        }),
+      ),
+    });
+    res.end();
+  }
 
   @Delete('/session')
   @ApiOperation({ summary: 'Logout' })

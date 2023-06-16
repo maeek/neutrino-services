@@ -23,6 +23,7 @@ enum MESSAGE_PATTERNS {
   LOGOUT_ALL_SESSIONS = 'auth.logoutAllSessions',
   WEBAUTHN_GEN_REG_OPTS = 'auth.loginWebAuthnGenRegOpts',
   WEBAUTH_VERIFY_REG = 'auth.loginWebAuthnVerifyReg',
+  CREATE_SESSION = 'auth.createSession',
 }
 
 @Controller()
@@ -56,14 +57,14 @@ export class AppController {
     }
   }
 
-  // @MessagePattern(MESSAGE_PATTERNS.LOGIN_WEBAUTHN)
-  // async loginWebAuthn() {
-  //   return this.appService.loginWebAuthn();
-  // }
+  @MessagePattern(MESSAGE_PATTERNS.LOGIN_WEBAUTHN)
+  async loginWebAuthn(@Body() body: LoginRequestDto) {
+    return this.webauthnService.generateAuthenticationOptions(body.username);
+  }
 
   @MessagePattern(MESSAGE_PATTERNS.LOGIN_WEBAUTHN_VERIFY)
-  async loginWebAuthnVerify() {
-    return this.appService.loginWebAuthnVerify();
+  async loginWebAuthnVerify(@Body() body: any) {
+    return this.webauthnService.verifyAuth(body.username, body.webauthn);
   }
 
   @MessagePattern(MESSAGE_PATTERNS.GET_SESSION_AND_RENEW)
@@ -112,6 +113,12 @@ export class AppController {
       body.username,
       body.webauthn,
     );
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.CREATE_SESSION)
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async createSession(@Body() body: any) {
+    return this.appService.createSession(body.user);
   }
 
   // @MessagePattern(MESSAGE_PATTERNS.CREATE_WEBAUTHN_OPTIONS)

@@ -13,7 +13,7 @@ enum UserRole {
 
 export class UsersResponseDto {
   id: string;
-  name: string;
+  username: string;
   createdAt: number;
   role?: UserRole;
   supportedLoginTypes: string[];

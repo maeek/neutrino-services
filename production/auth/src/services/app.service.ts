@@ -1,6 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { TokensRepository } from './token.repository';
-import { WebAuthnRequestDto } from 'src/interfaces/login.interface';
+import {
+  UsersResponseDto,
+  WebAuthnRequestDto,
+} from 'src/interfaces/login.interface';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
 import { TokenSigningService } from './jwt.service';
@@ -33,11 +36,6 @@ export class AppService {
   ) {
     if (method === 'password') {
       return this.loginPassword(username, passwordOrWebAuthn as string);
-    } else if (method === 'webauthn') {
-      return this.loginWebAuthn(
-        username,
-        passwordOrWebAuthn as WebAuthnRequestDto,
-      );
     }
 
     throw new Error('Invalid login method');
@@ -88,14 +86,6 @@ export class AppService {
     };
   }
 
-  async loginWebAuthn(username: string, webAuthnRequest: WebAuthnRequestDto) {
-    return {};
-  }
-
-  async loginWebAuthnVerify() {
-    return {};
-  }
-
   async getSessionAndRenew(refreshToken: string, accessToken: string) {
     try {
       await this.jwtService.verifyRefreshToken(refreshToken);
@@ -140,6 +130,47 @@ export class AppService {
       return {
         verified: false,
       };
+    }
+  }
+
+  async createSession(user: any) {
+    try {
+      if (!user) {
+        throw new Error('Invalid username or password');
+      }
+
+      const refreshToken = await this.jwtService.createRefreshToken();
+      const savedToken = await this.tokenRepository.create({
+        username: user.username,
+        refreshToken,
+      });
+      const accessToken = await this.jwtService.createAccessToken(
+        user.username,
+        user.role,
+        savedToken.id,
+      );
+
+      await firstValueFrom(
+        this.userServiceClient
+          .send(USER_MESSAGE_PATTERNS.SET_SESSION_TO_USER, {
+            username: user.username,
+            sessionId: savedToken.id,
+          })
+          .pipe(timeout(5000)),
+      );
+
+      return {
+        loggedIn: true,
+        refreshToken,
+        accessToken,
+        user: {
+          ...user,
+          sessions: [...user.sessions, savedToken.id],
+        },
+      };
+    } catch (error) {
+      this.logger.error(error);
+      throw error;
     }
   }
 

@@ -14,8 +14,8 @@ export class ConfigService {
   private readonly CONFIG_DEFAULTS = {
     RABBITMQ_URL: 'amqp://test:test@rabbitmq:5671',
     RABBITMQ_SURVIVE_RESTART: false,
-    WEBAUTHN_RPID: 'localhost',
-    WEBAUTHN_ORIGIN: 'http://localhost:5173',
+    WEBAUTHN_RPID: 'chat.suchanecki.me',
+    WEBAUTHN_ORIGIN: 'https://chat.suchanecki.me',
     WEBAUTHN_RPNAME: 'Chat',
     REDIS_HOST: 'redis',
     REDIS_PORT: 6379,

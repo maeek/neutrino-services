@@ -21,6 +21,7 @@ enum MESSAGE_PATTERNS {
   GET_SESSIONS = 'auth.getSessions',
   LOGOUT = 'auth.logout',
   LOGOUT_SESSIONS = 'auth.logoutSessions',
+  CREATE_SESSION = 'auth.createSession',
 }
 
 @Injectable()
@@ -168,6 +169,18 @@ export class AuthService {
   }
 
   async generateRegistrationOptions(username: string) {
+    let userExists = false;
+    try {
+      userExists = !!(await this.userService.getUser(username)).username;
+    } catch {}
+
+    if (userExists) {
+      return {
+        statusCode: HttpStatus.FORBIDDEN,
+        error: 'Failed to generate registration options',
+      };
+    }
+
     try {
       this.logger.debug(
         'Sending generate registration options request to auth service',
@@ -188,7 +201,10 @@ export class AuthService {
       return registrationOptions;
     } catch (error) {
       this.logger.error(error);
-      return {};
+      return {
+        statusCode: HttpStatus.FORBIDDEN,
+        error: error.message,
+      };
     }
   }
 
@@ -223,6 +239,100 @@ export class AuthService {
       });
 
       return newUser;
+    } catch (error) {
+      this.logger.error(error);
+      return false;
+    }
+  }
+
+  async createSessionForUser(
+    user: UsersResponseDto,
+  ): Promise<LoginResponseDto | StandardErrorResponse> {
+    try {
+      this.logger.debug('Sending create session request to auth service');
+
+      const session = await firstValueFrom(
+        this.authServiceClient
+          .send<LoginResponseDto>(MESSAGE_PATTERNS.CREATE_SESSION, {
+            user,
+          })
+          .pipe(timeout(5000)),
+      );
+
+      this.logger.debug('Received create session response from auth service');
+
+      return session;
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        error: error.message,
+        statusCode: HttpStatus.UNAUTHORIZED,
+      };
+    }
+  }
+
+  async generateLoginOptions(username: string) {
+    let userExists = false;
+    try {
+      userExists = (await this.userService.getUser(username)).username;
+    } catch {}
+
+    if (!userExists) {
+      return {
+        statusCode: HttpStatus.FORBIDDEN,
+        error: 'Failed to generate login options',
+      };
+    }
+
+    try {
+      this.logger.debug(
+        'Sending generate login options request to auth service',
+      );
+
+      const loginOptions = await firstValueFrom(
+        this.authServiceClient
+          .send<any>(MESSAGE_PATTERNS.LOGIN_WEBAUTHN, {
+            username,
+          })
+          .pipe(timeout(5000)),
+      );
+
+      this.logger.debug(
+        'Received generate login options response from auth service',
+      );
+
+      return loginOptions;
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        statusCode: HttpStatus.FORBIDDEN,
+        error: error.message,
+      };
+    }
+  }
+
+  async verifyLogin(username: string, body: any) {
+    try {
+      this.logger.debug('Sending verify login request to auth service');
+
+      const verified = await firstValueFrom(
+        this.authServiceClient
+          .send<any>(MESSAGE_PATTERNS.LOGIN_WEBAUTHN_VERIFY, {
+            username,
+            webauthn: body,
+          })
+          .pipe(timeout(5000)),
+      );
+
+      this.logger.debug('Received verify login response from auth service');
+
+      console.log(verified);
+
+      if (!verified?.verified) {
+        throw new Error('Could not verify login');
+      }
+
+      return verified;
     } catch (error) {
       this.logger.error(error);
       return false;

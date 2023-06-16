@@ -22,6 +22,7 @@ enum MESSAGE_PATTERNS {
   UPDATE_USER = 'user.updateUser',
   GET_USERS_BY_IDS = 'user.getUsersByIds',
   CREATE_USER_FROM_WEBAUTHN = 'user.createUserFromWebAuthn',
+  CHECK_IF_CREDENTIAL_ID_EXISTS = 'user.checkIfCredentialIdExists',
 }
 
 @Controller()
@@ -97,5 +98,10 @@ export class AppController {
   @MessagePattern(MESSAGE_PATTERNS.GET_USERS_BY_IDS)
   async getUsersByIds(@Body() body: any) {
     return this.appService.getUsersByIds(body.ids);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.CHECK_IF_CREDENTIAL_ID_EXISTS)
+  async checkIfCredentialIdExists(@Body() body: any) {
+    return this.appService.checkIfCredentialIdExists(body.credentialId);
   }
 }
