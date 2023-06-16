@@ -6,12 +6,13 @@
 - [x] messages
 
 // NOW
-- [ ] webAuthn registration generate session and set cookies
-- [ ] webAuthn login
-- [ ] webAuthn prevent registering the same device
-- [ ] prevent registering the same user
+- [x] webAuthn registration generate session and set cookies
+- [x] webAuthn login
+- [x] webAuthn prevent registering the same device
+- [x] prevent registering the same user
 - [ ] error handling on login and register
 
 - [ ] logging
 - [ ] readme
 - [ ] haproxy setup final with frontend and backend
+- [ ] frontend integration

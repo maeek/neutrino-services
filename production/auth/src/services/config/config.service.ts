@@ -115,12 +115,12 @@ export class ConfigService {
       publicKey,
       privateKey,
       signOptions: {
-        issuer: this.getValueFromEnv('JWT_ISSUER') || 'chat.suchanecki.me',
+        issuer: this.getValueFromEnv('JWT_ISSUER'),
         algorithm: 'RS256',
       },
       verifyOptions: {
         algorithms: ['RS256'],
-        issuer: this.getValueFromEnv('JWT_ISSUER') || 'chat.suchanecki.me',
+        issuer: this.getValueFromEnv('JWT_ISSUER'),
       },
     };
   }

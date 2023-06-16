@@ -5,8 +5,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 RUN npm install -g @nestjs/cli
-RUN npm rebuild --platform=linux --arch=x64 sharp
-RUN npm rebuild --platform=linux --arch=arm64 sharp
 RUN npm install
 
 VOLUME [ "/app" ]

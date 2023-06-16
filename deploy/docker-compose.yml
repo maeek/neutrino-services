@@ -5,10 +5,11 @@ services:
     build:
       context: ../production/gateway
       dockerfile: Dockerfile
-    hostname: gateway
+    hostname: chat-api-gateway
     volumes:
       - ../production/gateway:/app
       - ../production/broker/config/certs:/certs:ro
+      - ../data/avatars:/data/avatars
     ports:
       - "8080:8080"
     environment:
@@ -16,7 +17,6 @@ services:
       PGID: 1000
       TZ: Europe/Warsaw
       API_PORT: 8080
-      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
     env_file:
       - ../.env
     depends_on:
@@ -26,15 +26,15 @@ services:
     build:
       context: ../production/auth
       dockerfile: Dockerfile
-    hostname: auth
+    hostname: chat-api-auth
     volumes:
       - ../production/auth:/app
       - ../production/broker/config/certs:/certs:ro
+      - ../data/auth:/config
     environment:
       PUID: 1000
       PGID: 1000
       TZ: Europe/Warsaw
-      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
     env_file:
       - ../.env
     depends_on:
@@ -44,7 +44,7 @@ services:
     build:
       context: ../production/user
       dockerfile: Dockerfile
-    hostname: user
+    hostname: chat-api-user
     volumes:
       - ../production/user:/app
       - ../production/broker/config/certs:/certs:ro
@@ -52,7 +52,6 @@ services:
       PUID: 1000
       PGID: 1000
       TZ: Europe/Warsaw
-      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
     env_file:
       - ../.env
     depends_on:
@@ -62,7 +61,7 @@ services:
     build:
       context: ../production/websocket
       dockerfile: Dockerfile
-    hostname: websocket
+    hostname: chat-api-ws
     volumes:
       - ../production/websocket:/app
       - ../production/broker/config/certs:/certs:ro
@@ -71,7 +70,6 @@ services:
       PGID: 1000
       TZ: Europe/Warsaw
       API_PORT: 8081
-      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
     ports:
       - "8081:8081"
     env_file:
@@ -83,15 +81,15 @@ services:
     build:
       context: ../production/admin
       dockerfile: Dockerfile
-    hostname: admin
+    hostname: chat-api-admin
     volumes:
       - ../production/admin:/app
+      - ../data/admin:/config
       - ../production/broker/config/certs:/certs:ro
     environment:
       PUID: 1000
       PGID: 1000
       TZ: Europe/Warsaw
-      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
     env_file:
       - ../.env
     depends_on:
@@ -127,7 +125,7 @@ services:
   db:
     build:
       context: ../production/database
-      dockerfile: Dockerfileelopment
+      dockerfile: Dockerfile
     restart: always
     hostname: db
     environment:
@@ -139,22 +137,21 @@ services:
       TZ: "Europe/Warsaw"
     volumes:
       - ../production/database/init/:/docker-entrypoint-initdb.d/
+      - ../data/database:/data/db
     env_file:
       - ../.env
     ports:
       - 27017:27017
 
-  # mongo-express:
-  #   image: mongo-express
-  #   hostname: mongo-express
-  #   environment:
-  #     ME_CONFIG_MONGODB_URL: ${MOGNO_ROOT_DSN}
-  #     ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USER}
-  #     ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD}
-  #   env_file:
-  #     - ../.env
-  #   ports:
-  #     - 8088:8081
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - db
+  proxy:
+    image: haproxy:2.0
+    restart: always
+    hostname: proxy
+    user: 0:0
+    volumes:
+      - ../production/proxy/config:/usr/local/etc/haproxy/
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - ../.env
