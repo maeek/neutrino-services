@@ -6,6 +6,7 @@ export class ConfigService {
   private readonly RMQ_QUEUES = {
     RABBITMQ_QUEUE: 'user',
     RABBITMQ_AUTH_QUEUE: 'auth',
+    RABBITMQ_MESSAGE_QUEUE: 'websocket',
   };
 
   private readonly CONFIG_DEFAULTS = {
@@ -31,6 +32,21 @@ export class ConfigService {
       options: {
         urls: [this.getValueFromEnv('RABBITMQ_URL')],
         queue: this.getValueFromEnv('RABBITMQ_AUTH_QUEUE'),
+        noAck: false,
+        queueOptions: {
+          durable: this.getValueFromEnv('RABBITMQ_SURVIVE_RESTART'),
+        },
+        headers: {
+          'x-client-type': 'gateway',
+        },
+      },
+      transport: Transport.RMQ,
+    };
+
+    this.envConfig.messageService = {
+      options: {
+        urls: [this.getValueFromEnv('RABBITMQ_URL')],
+        queue: this.getValueFromEnv('RABBITMQ_MESSAGE_QUEUE'),
         noAck: false,
         queueOptions: {
           durable: this.getValueFromEnv('RABBITMQ_SURVIVE_RESTART'),

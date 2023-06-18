@@ -103,10 +103,17 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
   }
 
+  async muteUserForUser(forUser: string, mutedUsers: string[]) {
+    const sockets = await this.server.to(`u/${forUser}`).fetchSockets();
+    sockets.flat().forEach((socket) => {
+      socket.data.user.mutedUsers = mutedUsers;
+    });
+  }
+
   async sendToRoom(room: string, event: string, data: Message) {
     const roomClients = await this.server.in(room).fetchSockets();
     const usersWithoutSenderMuted = roomClients.filter(
-      (client) => !client.data.user.muted?.includes(data.fromId),
+      (client) => !client.data.user.mutedUsers?.includes(data.fromId),
     );
     const uniqueUsers = [
       ...new Set(usersWithoutSenderMuted.map((c) => c.data.user.username)),

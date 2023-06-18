@@ -28,6 +28,7 @@ enum MESSAGE_PATTERNS {
   DELETE_GROUP_BY_ID = 'websocket.deleteGroupById',
   PUT_USERS_IN_GROUP_BY_ID = 'websocket.putUsersInGroupById',
   CLOSE_SESSIONS = 'websocket.closeSessions',
+  MUTE_USERS = 'websocket.muteUsers',
 }
 
 @Controller()
@@ -148,6 +149,22 @@ export class AppController {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
         message: 'Failed to close sessions',
+      };
+    }
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.MUTE_USERS)
+  async muteUsers(@Body() body: { username: string; users: string[] }) {
+    try {
+      await this.socketGateway.muteUserForUser(body.username, body.users);
+      return {
+        message: 'Users muted',
+      };
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Failed to mute users',
       };
     }
   }

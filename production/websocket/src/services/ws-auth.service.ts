@@ -45,8 +45,8 @@ export class WsAuthService {
         sessionId: session.refreshToken?.id,
         role: session.user.role,
         username: session.user.username,
-        mutedUsers: session.user?.mutedUsers,
-        mutedChannels: session.user?.mutedChannels
+        mutedUsers: session.user?.settings?.mutedUsers,
+        mutedChannels: session.user?.settings?.mutedChannels
           ?.filter((c) => c.muted)
           .map((c) => c.channel),
       };

@@ -158,12 +158,10 @@ export class UpdateUserRequestDto {
   avatar?: string;
 
   @ApiProperty()
-  @IsString({ each: true })
   @IsOptional()
   mutedUsers?: string[];
 
   @ApiProperty()
-  @IsString({ each: true })
   @IsOptional()
   mutedChannels?: string[];
 

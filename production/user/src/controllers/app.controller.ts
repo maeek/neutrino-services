@@ -15,7 +15,6 @@ enum MESSAGE_PATTERNS {
   GET_USER = 'user.getUser',
   GET_USER_WITH_PASSWORD = 'user.getUserWithPassword',
   GET_USERS = 'user.getUsers',
-  GET_LOGGED_USER = 'user.getLoggedUser',
   REMOVE_USER = 'user.removeUser',
   SET_SESSION_TO_USER = 'user.setSessionToUser',
   REMOVE_SESSION_FROM_USER = 'user.removeSessionFromUser',
@@ -69,11 +68,6 @@ export class AppController {
   @MessagePattern(MESSAGE_PATTERNS.GET_USER)
   async getUser(@Body() body: any) {
     return this.appService.getUser(body.id);
-  }
-
-  @MessagePattern(MESSAGE_PATTERNS.GET_LOGGED_USER)
-  async getLoggedUser(@Body() body: any) {
-    return this.appService.getLoggedUser(body.token);
   }
 
   @MessagePattern(MESSAGE_PATTERNS.REMOVE_USER)

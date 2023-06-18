@@ -7,6 +7,7 @@ import { MongoConfigService } from './services/config/mongo-config.service';
 import { UsersRepository } from './services/user.repository';
 import { ConfigService } from './services/config/config.service';
 import { ClientProxyFactory } from '@nestjs/microservices';
+import { WebsocketService } from './services/websocket.service';
 
 @Module({
   imports: [
@@ -27,10 +28,19 @@ import { ClientProxyFactory } from '@nestjs/microservices';
     Logger,
     UsersRepository,
     ConfigService,
+    WebsocketService,
     {
       provide: 'AUTH_SERVICE',
       useFactory: (configService: ConfigService) => {
         const tokenServiceOptions = configService.get('authService');
+        return ClientProxyFactory.create(tokenServiceOptions);
+      },
+      inject: [ConfigService],
+    },
+    {
+      provide: 'WEBSOCKET_SERVICE',
+      useFactory: (configService: ConfigService) => {
+        const tokenServiceOptions = configService.get('messageService');
         return ClientProxyFactory.create(tokenServiceOptions);
       },
       inject: [ConfigService],

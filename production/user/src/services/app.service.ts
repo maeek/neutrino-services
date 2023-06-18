@@ -13,6 +13,7 @@ import {
 } from '../interfaces/create-user.interface';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
+import { WebsocketService } from './websocket.service';
 
 enum AUTH_MESSAGE_PATTERNS {
   LOGOUT_ALL_SESSIONS = 'auth.logoutAllSessions',
@@ -25,6 +26,7 @@ export class AppService implements OnModuleInit {
     private readonly usersRepository: UsersRepository,
     @Inject('AUTH_SERVICE')
     private readonly authServiceClient: ClientProxy,
+    private readonly websocketService: WebsocketService,
   ) {}
 
   onModuleInit() {
@@ -80,10 +82,6 @@ export class AppService implements OnModuleInit {
 
   async getUser(username: string): Promise<UserDocument> {
     return this.usersRepository.findOne({ username });
-  }
-
-  async getLoggedUser(token: string) {
-    return {};
   }
 
   async createUser(body: CreateUserRequestDto) {
@@ -256,6 +254,7 @@ export class AppService implements OnModuleInit {
       }
       user.settings.mutedUsers = body.mutedUsers;
       user.markModified('settings');
+      this.websocketService.muteUsers(user.username, body.mutedUsers);
     }
 
     if (body.mutedChannels) {
