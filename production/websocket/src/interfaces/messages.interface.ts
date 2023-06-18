@@ -10,8 +10,8 @@ export interface Message {
     name: string;
     uuid: string;
     mimeType: string;
-    type: 'text' | 'image' | 'video' | 'audio' | 'file';
-    parts: string[]; // uuid parts
+    size: number;
+    uri: string;
   }[];
   timeSent: number;
   serverUuid: string;

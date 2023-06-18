@@ -90,11 +90,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       (client) => !client.data.user.muted?.includes(data.fromId),
     );
 
-    console.log(
-      'what is this',
-      room,
-      usersWithoutSenderMuted.map((c) => c.data.user.username),
-    );
+    console.log('message', data.attachments);
 
     return Promise.all([
       ...usersWithoutSenderMuted.map((client) => client.emit(event, data)),
