@@ -15,4 +15,5 @@
 - [ ] logging
 - [ ] readme
 - [ ] haproxy setup final with frontend and backend
-- [ ] frontend integration
+- [x/ ] frontend integration
+- pliki dla recenzenta

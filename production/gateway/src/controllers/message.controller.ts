@@ -108,12 +108,14 @@ export class MessageController {
     const groupsWithUsers = await Promise.all(
       groupsThatUserCanSee.map(async (group) => {
         const users = await this.usersService.getUsersByObjectIds([
+          group.owner,
           ...group.users,
           ...group.blockedUsers,
         ]);
 
         return {
           ...group,
+          owner: users.find((u) => u.id === group.owner).username,
           users: users
             .filter((u) => group.users.includes(u.id))
             .map((u) => u.username),

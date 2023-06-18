@@ -71,6 +71,9 @@ export class CreateGroupResponseDto {
   name: string;
 
   @ApiProperty()
+  owner: string;
+
+  @ApiProperty()
   createdAt: number;
 
   @ApiProperty()

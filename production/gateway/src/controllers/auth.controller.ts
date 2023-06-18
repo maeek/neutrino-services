@@ -6,6 +6,7 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Logger,
   Post,
   Req,
   Res,
@@ -40,6 +41,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
+    private readonly logger: Logger,
   ) {}
 
   @Get('/health')
@@ -87,7 +89,7 @@ export class AuthController {
       });
       res.end();
     } catch (error) {
-      console.error(error);
+      this.logger.error(error);
       res.status(HttpStatus.UNAUTHORIZED).json({
         statusCode: HttpStatus.UNAUTHORIZED,
         message: 'Invalid credentials',

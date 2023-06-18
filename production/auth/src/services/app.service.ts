@@ -1,9 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { TokensRepository } from './token.repository';
-import {
-  UsersResponseDto,
-  WebAuthnRequestDto,
-} from 'src/interfaces/login.interface';
+import { WebAuthnRequestDto } from 'src/interfaces/login.interface';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
 import { TokenSigningService } from './jwt.service';
@@ -126,7 +123,6 @@ export class AppService {
         user,
       };
     } catch (error) {
-      console.error(error);
       this.logger.error(error);
       return {
         verified: false,

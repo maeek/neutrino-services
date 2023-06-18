@@ -1,10 +1,18 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { WsAuthService } from '../services/ws-auth.service';
 
 @Injectable()
 export class WsAuthGuard implements CanActivate {
-  constructor(private readonly wsAuthService: WsAuthService) {}
+  constructor(
+    private readonly wsAuthService: WsAuthService,
+    private readonly logger: Logger,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
@@ -18,7 +26,7 @@ export class WsAuthGuard implements CanActivate {
 
       return true;
     } catch (e) {
-      console.error('WsAuthGuard authentication failed', e);
+      this.logger.error('WsAuthGuard authentication failed', e);
       return false;
     }
   }

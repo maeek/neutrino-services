@@ -1,7 +1,7 @@
 import {
   Body,
   Controller,
-  Req,
+  Logger,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -12,7 +12,6 @@ import { LogoutRequestDto } from 'src/interfaces/logout.interface';
 import { GetSessionAndRenewRequestDto } from 'src/interfaces/get-session.interface';
 import { GetSessionsRequestDto } from 'src/interfaces/get-sessions.interface';
 import { WebAuthnService } from 'src/services/webauthn.service';
-import { Request } from 'express';
 
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'auth.getHealth',
@@ -38,6 +37,7 @@ export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly webauthnService: WebAuthnService,
+    private readonly logger: Logger,
   ) {}
 
   @MessagePattern(MESSAGE_PATTERNS.GET_HEALTH)
@@ -58,7 +58,7 @@ export class AppController {
 
       return loggedIn;
     } catch (error) {
-      console.error(error);
+      this.logger.error(error);
       return {
         loggedIn: false,
       };

@@ -17,7 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 @WebSocketGateway({
   path: '/ws',
-  maxHttpBufferSize: 1e7, // 10MB
+  maxHttpBufferSize: 1e8, // 100MB
   serveClient: false,
   cookie: true,
 })
@@ -79,9 +79,15 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   // handle session logouts
-  @SubscribeMessage('sessions')
-  async handleSession(payload: any) {
-    return 'Hello world!';
+  // @SubscribeMessage('sessions')
+  // async handleSession(payload: any) {
+  //   return 'Hello world!';
+  // }
+
+  async getSocketsForUsers(users: string[]) {
+    return Promise.all(
+      users.map((username) => this.server.to(`u/${username}`).fetchSockets()),
+    );
   }
 
   async sendToRoom(room: string, event: string, data: Message) {
@@ -89,14 +95,15 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const usersWithoutSenderMuted = roomClients.filter(
       (client) => !client.data.user.muted?.includes(data.fromId),
     );
-
-    console.log('message', data.attachments);
+    const uniqueUsers = [
+      ...new Set(usersWithoutSenderMuted.map((c) => c.data.user.username)),
+    ];
 
     return Promise.all([
-      ...usersWithoutSenderMuted.map((client) => client.emit(event, data)),
-      ...(usersWithoutSenderMuted.find(
-        (c) => c.data.user.username === data.fromId,
-      )
+      ...uniqueUsers.map((username) =>
+        this.server.to(`u/${username}`).emit(event, data),
+      ),
+      ...(uniqueUsers.find((c) => c === data.fromId)
         ? []
         : [this.server.to(`u/${data.fromId}`).emit(event, data)]),
     ]);

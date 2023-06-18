@@ -35,6 +35,9 @@ export class Channel {
   @Prop({ type: Boolean })
   public: boolean;
 
+  @Prop({ type: MSchema.Types.ObjectId, ref: 'User', default: [] })
+  owner: string;
+
   @Prop({ type: [MSchema.Types.ObjectId], ref: 'User', default: [] })
   users: string[];
 

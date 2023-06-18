@@ -1,11 +1,14 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from './config/config.service';
 import * as fs from 'fs';
 import * as sharp from 'sharp';
 
 @Injectable()
 export class FileService implements OnModuleInit {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly logger: Logger,
+  ) {}
 
   async onModuleInit() {
     await this.initFiles();
@@ -38,7 +41,7 @@ export class FileService implements OnModuleInit {
         })
         .toBuffer();
     } catch (error) {
-      console.error(error);
+      this.logger.error(error);
     }
   }
 
@@ -62,7 +65,7 @@ export class FileService implements OnModuleInit {
 
       return filePath;
     } catch (error) {
-      console.error(error);
+      this.logger.error;
     }
   }
 
@@ -72,7 +75,7 @@ export class FileService implements OnModuleInit {
         `${this.configService.get('FILES_DIR')}/${username}.png`,
       );
     } catch (error) {
-      console.error(error);
+      this.logger.error;
       return null;
     }
   }

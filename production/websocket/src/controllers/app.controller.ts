@@ -4,7 +4,6 @@ import {
   Get,
   HttpStatus,
   Logger,
-  Post,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -18,6 +17,7 @@ import {
   UpdateGroupRequestDto,
 } from '../interfaces/groups.interface';
 import { ChannelsMgmtService } from 'src/services/channels-mgmt.service';
+import { SocketGateway } from 'src/socket/socket.gateway';
 
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'websocket.getHealth',
@@ -34,6 +34,7 @@ export class AppController {
   constructor(
     private readonly appService: MessagesService,
     private readonly channelsMgmtService: ChannelsMgmtService,
+    private readonly socketGateway: SocketGateway,
     private readonly logger: Logger,
   ) {}
 
@@ -54,6 +55,17 @@ export class AppController {
         body,
         body.owner,
       );
+
+      console.log('CREATE CHANNEL BODYY', body);
+      const sockets = await this.socketGateway.getSocketsForUsers([
+        body.owner,
+        ...body.users,
+      ]);
+      console.log(sockets.flat().map((socket) => socket.data.user.username));
+      sockets.flat().forEach((socket) => {
+        socket.join(`c/${group.name}`);
+      });
+
       return group;
     } catch (error) {
       this.logger.error(error);

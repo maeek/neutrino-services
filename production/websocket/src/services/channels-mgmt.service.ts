@@ -44,14 +44,16 @@ export class ChannelsMgmtService {
     const createdGroup = await this.channelRepository.create({
       name: body.name,
       public: body.public || false,
-      users,
-      blockedUsers,
+      owner: users.find((user) => user.username === owner).id,
+      users: users.map((user) => user.id),
+      blockedUsers: blockedUsers.map((user) => user.id),
     });
 
     return {
       name: createdGroup.name,
       public: createdGroup.public,
       users: createdGroup.users,
+      owner: createdGroup.owner,
       blockedUsers: createdGroup.blockedUsers,
       createdAt: createdGroup.createdAt,
     };

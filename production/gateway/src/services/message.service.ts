@@ -76,10 +76,7 @@ export class MessageService {
           .pipe(timeout(5000)),
       );
 
-      this.logger.debug(
-        'Received create group from websocket service',
-        createdChannel,
-      );
+      this.logger.debug('Received create group from websocket service');
 
       return createdChannel;
     } catch (error) {
@@ -102,7 +99,7 @@ export class MessageService {
           .pipe(timeout(5000)),
       );
 
-      this.logger.debug('Received get group from websocket service', groups);
+      this.logger.debug('Received get group from websocket service');
 
       return groups;
     } catch (error) {
