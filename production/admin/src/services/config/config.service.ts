@@ -50,7 +50,6 @@ export class ConfigService {
       !fs.existsSync(this.get('SERVER_CONFIG_PATH')) ||
       !fs.existsSync(`${this.get('SERVER_CONFIG_PATH')}/config.json`)
     ) {
-      console.log('init');
       await this.initServerConfig();
     }
 

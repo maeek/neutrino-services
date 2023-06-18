@@ -49,7 +49,6 @@ export class AppController {
 
       return user;
     } catch (error) {
-      console.log(error);
       return {
         statusCode: HttpStatus.FORBIDDEN,
         error: error.message,

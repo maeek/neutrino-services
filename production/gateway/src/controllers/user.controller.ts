@@ -223,7 +223,6 @@ export class UserController {
     file: Express.Multer.File,
   ) {
     if (file) {
-      console.log(file);
       const user = await this.userService.getUser(params.id);
       const avatar = await this.fileService.saveAvatarFile(
         params.id,

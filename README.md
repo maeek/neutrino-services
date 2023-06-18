@@ -10,7 +10,7 @@
 - [x] webAuthn login
 - [x] webAuthn prevent registering the same device
 - [x] prevent registering the same user
-- [ ] error handling on login and register
+- [x] error handling on login and register
 
 - [ ] logging
 - [ ] readme

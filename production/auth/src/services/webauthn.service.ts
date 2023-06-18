@@ -44,8 +44,6 @@ export class WebAuthnService {
         .pipe(timeout(5000)),
     );
 
-    console.log('user.credentials', user.credentials);
-
     return (
       user?.credentials.map((authenticator) => ({
         id: isoBase64URL.toBuffer(authenticator.credentialId),

@@ -64,60 +64,45 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     if (payload.type === MessageTypes.DIRECT) {
-      return this.sendToRoom(
-        `u/${payload.toId}`,
-        'message',
-        {
-          ...payload,
-          fromId: client.data.user.username,
-          serverUuid: uuidv4(),
-        },
-        client,
-      );
+      return this.sendToRoom(`u/${payload.toId}`, 'message', {
+        ...payload,
+        fromId: client.data.user.username,
+        serverUuid: uuidv4(),
+      });
     } else if (payload.type === MessageTypes.CHANNEL) {
-      return this.sendToRoom(
-        `c/${payload.toId}`,
-        'message',
-        {
-          ...payload,
-          fromId: client.data.user.username,
-          serverUuid: uuidv4(),
-        },
-        client,
-      );
+      return this.sendToRoom(`c/${payload.toId}`, 'message', {
+        ...payload,
+        fromId: client.data.user.username,
+        serverUuid: uuidv4(),
+      });
     }
   }
 
   // handle session logouts
   @SubscribeMessage('sessions')
   async handleSession(payload: any) {
-    console.log('message', payload);
     return 'Hello world!';
   }
 
-  async sendToRoom(
-    room: string,
-    event: string,
-    data: Message,
-    senderSocket?: Socket,
-  ) {
-    console.log('message', data);
-
+  async sendToRoom(room: string, event: string, data: Message) {
     const roomClients = await this.server.in(room).fetchSockets();
     const usersWithoutSenderMuted = roomClients.filter(
       (client) => !client.data.user.muted?.includes(data.fromId),
     );
 
     console.log(
-      usersWithoutSenderMuted.map((client) => `u/${client.data.user.username}`),
-      `u/${data.fromId}`,
+      'what is this',
+      room,
+      usersWithoutSenderMuted.map((c) => c.data.user.username),
     );
 
     return Promise.all([
-      ...usersWithoutSenderMuted.map((client) =>
-        this.server.to(`u/${client.data.user.username}`).emit(event, data),
-      ),
-      this.server.to(`u/${data.fromId}`).emit(event, data),
+      ...usersWithoutSenderMuted.map((client) => client.emit(event, data)),
+      ...(usersWithoutSenderMuted.find(
+        (c) => c.data.user.username === data.fromId,
+      )
+        ? []
+        : [this.server.to(`u/${data.fromId}`).emit(event, data)]),
     ]);
   }
 

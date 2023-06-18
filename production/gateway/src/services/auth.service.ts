@@ -328,8 +328,6 @@ export class AuthService {
 
       this.logger.debug('Received verify login response from auth service');
 
-      console.log(verified);
-
       if (!verified?.verified) {
         throw new Error('Could not verify login');
       }
