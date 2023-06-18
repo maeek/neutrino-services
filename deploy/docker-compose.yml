@@ -153,3 +153,11 @@ services:
       - "443:443"
     env_file:
       - ../.env
+
+  www:
+    build:
+      context: ../production/www
+      dockerfile: Dockerfile
+      args:
+        - github_token=${GITHUB_TOKEN}
+    hostname: chat-app
