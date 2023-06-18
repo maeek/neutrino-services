@@ -6,11 +6,11 @@ install:
 	npm --prefix ./production/user install
 	npm --prefix ./production/websocket install
 	mkdir -p ./data/admin ./data/auth ./data/avatar
-	chmod -R a+rw ./data
+	chmod -R a+rw ./data/admin ./data/auth ./data/avatar
 
-up:
-	cp .env depoy/.env
-	docker-compose -f docker-compose.yml up -d
+up: # install
+	cp .env deploy/.env
+	docker-compose -f deploy/docker-compose.yml up --build
 
 down:
-	docker-compose -f docker-compose.yml down --remove-orphans
+	docker-compose -f deploy/docker-compose.yml down --remove-orphans
