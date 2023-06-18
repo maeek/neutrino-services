@@ -32,7 +32,7 @@ export class WsAuthService {
       }
 
       const session = await this.authService.checkSessionAndRefresh(
-        refreshToken,
+        refreshToken.split(';')[0],
         accessToken,
       );
 

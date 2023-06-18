@@ -13,12 +13,12 @@ import { UseGuards } from '@nestjs/common';
 import { WsAuthGuard } from 'src/guards/auth.guard';
 import { WsAuthService } from 'src/services/ws-auth.service';
 import { ChannelsMgmtService } from 'src/services/channels-mgmt.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @WebSocketGateway({
   path: '/ws',
   maxHttpBufferSize: 1e7, // 10MB
   serveClient: false,
-  transports: ['websocket'],
   cookie: true,
 })
 @UseGuards(WsAuthGuard)
@@ -39,14 +39,30 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return client.disconnect();
   }
 
+  @SubscribeMessage('joinChannel')
+  async joinChannelRequest(
+    @MessageBody() payload: { name: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const channel = await this.channelsService.getGroupById(payload.name);
+
+    if (
+      !channel ||
+      channel.blockedUsers.includes(client.data.user.id) ||
+      (!channel.public && !channel.users.includes(client.data.user.id))
+    ) {
+      return;
+    }
+
+    client.join(`c/${payload.name}`);
+  }
+
   // handle messages
   @SubscribeMessage('message')
   async handleMessage(
     @MessageBody() payload: Message,
     @ConnectedSocket() client: Socket,
   ) {
-    console.log('message', payload);
-
     if (payload.type === MessageTypes.DIRECT) {
       return this.sendToRoom(
         `u/${payload.toId}`,
@@ -54,6 +70,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
         {
           ...payload,
           fromId: client.data.user.username,
+          serverUuid: uuidv4(),
         },
         client,
       );
@@ -64,6 +81,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
         {
           ...payload,
           fromId: client.data.user.username,
+          serverUuid: uuidv4(),
         },
         client,
       );
@@ -83,32 +101,25 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     data: Message,
     senderSocket?: Socket,
   ) {
+    console.log('message', data);
+
     const roomClients = await this.server.in(room).fetchSockets();
     const usersWithoutSenderMuted = roomClients.filter(
       (client) => !client.data.user.muted?.includes(data.fromId),
     );
 
-    return Promise.all(
-      usersWithoutSenderMuted
-        .filter((client) => client.id !== senderSocket?.id)
-        .map((client) =>
-          this.server.to(`u/${client.data.user.username}`).emit(event, data),
-        ),
+    console.log(
+      usersWithoutSenderMuted.map((client) => `u/${client.data.user.username}`),
+      `u/${data.fromId}`,
     );
+
+    return Promise.all([
+      ...usersWithoutSenderMuted.map((client) =>
+        this.server.to(`u/${client.data.user.username}`).emit(event, data),
+      ),
+      this.server.to(`u/${data.fromId}`).emit(event, data),
+    ]);
   }
-
-  // async sendToUser(
-  //   username: string,
-  //   event: string,
-  //   data: { from: string; [key: string]: any },
-  //   @ConnectedSocket() client: Socket,
-  // ) {
-  //   return;
-  // }
-
-  // async sendToUser(socketId: string, event: string, data: any) {
-  //   return this.server.to(socketId).emit(event, data);
-  // }
 
   async sendToAll(event: string, data: any) {
     return this.server.emit(event, data);

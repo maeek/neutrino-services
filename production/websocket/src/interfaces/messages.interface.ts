@@ -14,6 +14,7 @@ export interface Message {
     parts: string[]; // uuid parts
   }[];
   timeSent: number;
+  serverUuid: string;
   uuid: string;
   fromId: string;
   toId: string;
