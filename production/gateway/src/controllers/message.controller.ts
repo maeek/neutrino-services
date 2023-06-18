@@ -115,7 +115,7 @@ export class MessageController {
 
         return {
           ...group,
-          owner: users.find((u) => u.id === group.owner).username,
+          owner: users.find((u) => u.id === group.owner)?.username,
           users: users
             .filter((u) => group.users.includes(u.id))
             .map((u) => u.username),
