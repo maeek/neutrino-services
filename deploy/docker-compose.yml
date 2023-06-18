@@ -6,6 +6,7 @@ services:
       context: ../production/gateway
       dockerfile: Dockerfile
     hostname: chat-api-gateway
+    restart: always
     volumes:
       - ../production/gateway:/app
       - ../production/broker/config/certs:/certs:ro
@@ -27,6 +28,7 @@ services:
       context: ../production/auth
       dockerfile: Dockerfile
     hostname: chat-api-auth
+    restart: always
     volumes:
       - ../production/auth:/app
       - ../production/broker/config/certs:/certs:ro
@@ -45,6 +47,7 @@ services:
       context: ../production/user
       dockerfile: Dockerfile
     hostname: chat-api-user
+    restart: always
     volumes:
       - ../production/user:/app
       - ../production/broker/config/certs:/certs:ro
@@ -62,6 +65,7 @@ services:
       context: ../production/websocket
       dockerfile: Dockerfile
     hostname: chat-api-ws
+    restart: always
     volumes:
       - ../production/websocket:/app
       - ../production/broker/config/certs:/certs:ro
@@ -82,6 +86,7 @@ services:
       context: ../production/admin
       dockerfile: Dockerfile
     hostname: chat-api-admin
+    restart: always
     volumes:
       - ../production/admin:/app
       - ../data/admin:/config
@@ -101,6 +106,7 @@ services:
       dockerfile: Dockerfile
     hostname: rabbitmq
     user: 0:0
+    restart: always
     environment:
       TZ: Europe/Warsaw
     ports:
@@ -161,3 +167,4 @@ services:
       args:
         - github_token=${GITHUB_TOKEN}
     hostname: chat-app
+    restart: always
