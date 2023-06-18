@@ -12,6 +12,7 @@ import { redisStore } from 'cache-manager-ioredis-yet';
 import { ClientProxyFactory } from '@nestjs/microservices';
 import { JwtModule } from '@nestjs/jwt';
 import { TokenSigningService } from './services/jwt.service';
+import { WebsocketService } from './services/websocket.service';
 
 @Module({
   imports: [
@@ -56,11 +57,20 @@ import { TokenSigningService } from './services/jwt.service';
     ConfigService,
     WebAuthnService,
     TokenSigningService,
+    WebsocketService,
     Logger,
     {
       provide: 'USER_SERVICE',
       useFactory: (configService: ConfigService) => {
         const tokenServiceOptions = configService.get('userService');
+        return ClientProxyFactory.create(tokenServiceOptions);
+      },
+      inject: [ConfigService],
+    },
+    {
+      provide: 'WEBSOCKET_SERVICE',
+      useFactory: (configService: ConfigService) => {
+        const tokenServiceOptions = configService.get('messageService');
         return ClientProxyFactory.create(tokenServiceOptions);
       },
       inject: [ConfigService],

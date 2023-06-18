@@ -57,7 +57,6 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.join(`c/${payload.name}`);
   }
 
-  // handle messages
   @SubscribeMessage('message')
   async handleMessage(
     @MessageBody() payload: Message,
@@ -78,11 +77,25 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  // handle session logouts
-  // @SubscribeMessage('sessions')
-  // async handleSession(payload: any) {
-  //   return 'Hello world!';
-  // }
+  async logoutSessionsForUser(username: string, sessionId?: string) {
+    const sockets = await this.server.to(`u/${username}`).fetchSockets();
+
+    await Promise.all(
+      sockets
+        .flat()
+        .filter(
+          (socket) => !sessionId || socket.data.user.sessionId === sessionId,
+        )
+        .map(async (socket) => {
+          socket.emit('sessions', { logout: true });
+          return socket.disconnect();
+        }),
+    );
+
+    return {
+      success: true,
+    };
+  }
 
   async getSocketsForUsers(users: string[]) {
     return Promise.all(

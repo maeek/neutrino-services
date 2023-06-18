@@ -2,8 +2,9 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { TokensRepository } from './token.repository';
 import { WebAuthnRequestDto } from 'src/interfaces/login.interface';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom, timeout } from 'rxjs';
+import { defaultIfEmpty, firstValueFrom, timeout } from 'rxjs';
 import { TokenSigningService } from './jwt.service';
+import { WebsocketService } from './websocket.service';
 
 enum USER_MESSAGE_PATTERNS {
   GET_USER = 'user.getUser',
@@ -20,6 +21,7 @@ export class AppService {
     private readonly jwtService: TokenSigningService,
     @Inject('USER_SERVICE')
     private readonly userServiceClient: ClientProxy,
+    private readonly websocketService: WebsocketService,
   ) {}
 
   async getHealth() {
@@ -197,17 +199,17 @@ export class AppService {
       });
       await Promise.all(
         sessions.map((sessionId) => {
+          this.websocketService.closeSessions(username, sessionId);
           return firstValueFrom(
             this.userServiceClient
               .send(USER_MESSAGE_PATTERNS.REMOVE_SESSION_FROM_USER, {
                 username,
                 sessionId,
               })
-              .pipe(timeout(5000)),
+              .pipe(defaultIfEmpty({}), timeout(5000)),
           );
         }),
       );
-      // await this.messageService.logout(username, [refreshToken])
       return {};
     } catch (error) {
       this.logger.error(error);
@@ -223,7 +225,11 @@ export class AppService {
           $in: sessions,
         },
       });
-      // await this.messageService.logout(username, sessions)
+      await Promise.all(
+        sessions.map((sessionId) =>
+          this.websocketService.closeSessions(username, sessionId),
+        ),
+      );
       return {};
     } catch (error) {
       this.logger.error(error);
@@ -236,23 +242,11 @@ export class AppService {
       await this.tokenRepository.remove({
         username,
       });
-      // await this.messageService.logoutAll(username)
+      await this.websocketService.closeSessions(username);
       return {};
     } catch (error) {
       this.logger.error(error);
       throw error;
     }
-  }
-
-  async createWebAuthnOptions() {
-    return {};
-  }
-
-  async getChallenge() {
-    return {};
-  }
-
-  async solveChallenge() {
-    return {};
   }
 }

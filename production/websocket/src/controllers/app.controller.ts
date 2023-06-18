@@ -27,6 +27,7 @@ enum MESSAGE_PATTERNS {
   UPDATE_GROUP_BY_ID = 'websocket.updateGroupById',
   DELETE_GROUP_BY_ID = 'websocket.deleteGroupById',
   PUT_USERS_IN_GROUP_BY_ID = 'websocket.putUsersInGroupById',
+  CLOSE_SESSIONS = 'websocket.closeSessions',
 }
 
 @Controller()
@@ -122,6 +123,31 @@ export class AppController {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
         message: 'Failed to add users to group',
+      };
+    }
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.CLOSE_SESSIONS)
+  async closeSessions(
+    @Body() body: { users: { id: string; sessionId?: string }[] },
+  ) {
+    try {
+      await Promise.all(
+        body.users.map((user) => {
+          return this.socketGateway.logoutSessionsForUser(
+            user.id,
+            user.sessionId,
+          );
+        }),
+      );
+      return {
+        message: 'Sessions closed',
+      };
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Failed to close sessions',
       };
     }
   }

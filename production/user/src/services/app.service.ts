@@ -196,7 +196,7 @@ export class AppService implements OnModuleInit {
   }
 
   async removeSessionFromUser(username: string, session: string) {
-    return this.usersRepository.findOneAndUpdate(
+    await this.usersRepository.findOneAndUpdate(
       { username },
       {
         $pull: {
@@ -204,6 +204,8 @@ export class AppService implements OnModuleInit {
         },
       },
     );
+
+    return true;
   }
 
   async updateUser(

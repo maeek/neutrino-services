@@ -25,7 +25,9 @@ export class WsAuthService {
     try {
       const accessToken =
         socket.handshake?.headers?.authorization?.split(' ')[1];
-      const refreshToken = socket.handshake?.headers?.cookie?.split('=')[1];
+      const refreshToken = this.parseCookies(socket.handshake?.headers?.cookie)[
+        'chat-session'
+      ];
 
       if (!accessToken || !refreshToken) {
         throw new Error('No auth data');
@@ -65,5 +67,12 @@ export class WsAuthService {
       this.initializationMap.delete(socket.id);
       return socket;
     }
+  }
+
+  parseCookies(cookie: string) {
+    return cookie.split(';').reduce((res, item) => {
+      const data = item.trim().split('=');
+      return { ...res, [data[0]]: data[1] };
+    }, {});
   }
 }
