@@ -3,6 +3,7 @@ FROM rabbitmq:3-management-alpine
 ENV RABBITMQ_USER user
 # Make sure to change this password by providing a new one in the docker-compose.yml file
 ENV RABBITMQ_PASSWORD user
+
 ENV RABBITMQ_PID_FILE /var/lib/rabbitmq/mnesia/rabbitmq
 
 VOLUME /etc/rabbitmq/

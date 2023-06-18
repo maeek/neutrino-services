@@ -70,6 +70,7 @@ export class AuthService {
   async login(
     body: LoginRequestDto,
     user: UsersResponseDto,
+    device: string,
   ): Promise<LoginResponseDto | StandardErrorResponse> {
     try {
       this.logger.debug('Sending login request to auth service');
@@ -79,6 +80,7 @@ export class AuthService {
           .send<LoginResponseDto>(MESSAGE_PATTERNS.LOGIN, {
             ...body,
             user,
+            device,
           })
           .pipe(timeout(5000)),
       );
@@ -225,8 +227,6 @@ export class AuthService {
         'Received verify registration response from auth service',
       );
 
-      console.log(verified);
-
       if (!verified?.verified) {
         throw new Error('Could not verify registration');
       }
@@ -247,6 +247,7 @@ export class AuthService {
 
   async createSessionForUser(
     user: UsersResponseDto,
+    device: string,
   ): Promise<LoginResponseDto | StandardErrorResponse> {
     try {
       this.logger.debug('Sending create session request to auth service');
@@ -255,6 +256,7 @@ export class AuthService {
         this.authServiceClient
           .send<LoginResponseDto>(MESSAGE_PATTERNS.CREATE_SESSION, {
             user,
+            device,
           })
           .pipe(timeout(5000)),
       );

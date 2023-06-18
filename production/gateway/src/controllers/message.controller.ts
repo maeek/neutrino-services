@@ -36,11 +36,15 @@ import { IDParams } from 'src/interfaces/validators/id';
 import { Response } from 'express';
 import { AuthGuard } from 'src/guards/jwt.guard';
 import { UserRole } from 'src/interfaces/user.interface';
+import { UserService } from 'src/services/user.service';
 
 @Controller('messages')
 @UseGuards(AuthGuard)
 export class MessageController {
-  constructor(private readonly messageService: MessageService) {}
+  constructor(
+    private readonly messageService: MessageService,
+    private readonly usersService: UserService,
+  ) {}
 
   @Get('/health')
   @ApiTags('Health')
@@ -65,8 +69,20 @@ export class MessageController {
   ): Promise<CreateGroupResponseDto> {
     const user = req.user.username;
     const createdGroup = await this.messageService.createGroup(body, user);
+    const users = await this.usersService.getUsersByObjectIds([
+      ...createdGroup.users,
+      ...createdGroup.blockedUsers,
+    ]);
 
-    return new CreateGroupResponseDto(createdGroup);
+    return new CreateGroupResponseDto({
+      ...createdGroup,
+      users: users
+        .filter((u) => createdGroup.users.includes(u.id))
+        .map((u) => u.username),
+      blockedUsers: users
+        .filter((u) => createdGroup.blockedUsers.includes(u.id))
+        .map((u) => u.username),
+    });
   }
 
   @Get('/groups')
@@ -74,15 +90,42 @@ export class MessageController {
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @ApiTags('Messages')
   @UseInterceptors(ClassSerializerInterceptor)
-  async getGroup(@Query() query: PaginationParams) {
+  async getGroup(@Query() query: PaginationParams, @Req() req: any) {
     const groups = await this.messageService.getGroups(
       query.offset,
       query.limit,
       query.find,
     );
 
+    const groupsThatUserCanSee = groups.filter((group) => {
+      return (
+        ((group.public || group.users.includes(req.user.id)) &&
+          !group.blockedUsers.includes(req.user.id)) ||
+        req.user.role === UserRole.ADMIN
+      );
+    });
+
+    const groupsWithUsers = await Promise.all(
+      groupsThatUserCanSee.map(async (group) => {
+        const users = await this.usersService.getUsersByObjectIds([
+          ...group.users,
+          ...group.blockedUsers,
+        ]);
+
+        return {
+          ...group,
+          users: users
+            .filter((u) => group.users.includes(u.id))
+            .map((u) => u.username),
+          blockedUsers: users
+            .filter((u) => group.blockedUsers.includes(u.id))
+            .map((u) => u.username),
+        };
+      }),
+    );
+
     return {
-      items: groups.map((group) => new CreateGroupResponseDto(group)),
+      items: groupsWithUsers.map((group) => new CreateGroupResponseDto(group)),
       total: groups.length,
     };
   }
@@ -95,12 +138,25 @@ export class MessageController {
   async getGroupById(@Param() params: IDParams) {
     const group = await this.messageService.getGroupById(params.id);
 
+    const users = await this.usersService.getUsersByObjectIds([
+      ...group.users,
+      ...group.blockedUsers,
+    ]);
+
     if (!group) {
       throw new HttpException('Group not found', 404);
     }
 
     return {
-      group: new CreateGroupResponseDto(group),
+      group: new CreateGroupResponseDto({
+        ...group,
+        users: users
+          .filter((u) => group.users.includes(u.id))
+          .map((u) => u.username),
+        blockedUsers: users
+          .filter((u) => group.blockedUsers.includes(u.id))
+          .map((u) => u.username),
+      }),
     };
   }
 

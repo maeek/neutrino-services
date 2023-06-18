@@ -26,7 +26,7 @@ export class TokensRepository {
   async find(
     tokensFilterQuery: FilterQuery<TokenDocument>,
   ): Promise<TokenDocument[]> {
-    return this.tokenModel.find(tokensFilterQuery);
+    return this.tokenModel.find(tokensFilterQuery).exec();
   }
 
   async create(token: Partial<Token>) {

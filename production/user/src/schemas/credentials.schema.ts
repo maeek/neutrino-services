@@ -30,7 +30,7 @@ export class Credential {
   @Prop()
   signCount: number;
 
-  @Prop({ type: Number, default: Date.now() })
+  @Prop({ type: Number, default: () => Date.now() })
   createdAt: number;
 
   @Prop()

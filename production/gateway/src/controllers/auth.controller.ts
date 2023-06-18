@@ -22,16 +22,18 @@ import {
   SessionResponse,
 } from '../interfaces/auth.interface';
 import { UserService } from '../services/user.service';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { isError } from '../interfaces/error.interface';
 import {
   SelfUserResponseDto,
+  UserRole,
   UsersLoggedResponseDto,
   UsersLoggedSetttingsChannelResponseDto,
   UsersLoggedSetttingsResponseDto,
 } from '../interfaces/user.interface';
 import { instanceToPlain } from 'class-transformer';
 import { AuthGuard } from 'src/guards/jwt.guard';
+import * as DeviceDetector from 'device-detector-js';
 
 @Controller('auth')
 export class AuthController {
@@ -52,10 +54,22 @@ export class AuthController {
   @ApiTags('Authentication')
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   @UseInterceptors(ClassSerializerInterceptor)
-  async login(@Body() body: LoginRequestDto, @Res() res: Response) {
+  async login(
+    @Body() body: LoginRequestDto,
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
     try {
+      const deviceDetector = new DeviceDetector();
+      const dev = deviceDetector.parse(req.headers['user-agent']);
       const user = await this.userService.getUser(body.username);
-      const loginData = await this.authService.login(body, user);
+      const loginData = await this.authService.login(
+        body,
+        user,
+        `${dev.client?.name} ${dev.os?.name || ''} ${
+          dev.device?.type ? `(${dev.device?.type})` : ''
+        }`.trim(),
+      );
 
       if (isError(loginData)) {
         throw new Error(loginData.error);
@@ -73,6 +87,7 @@ export class AuthController {
       });
       res.end();
     } catch (error) {
+      console.error(error);
       res.status(HttpStatus.UNAUTHORIZED).json({
         statusCode: HttpStatus.UNAUTHORIZED,
         message: 'Invalid credentials',
@@ -121,11 +136,17 @@ export class AuthController {
   async webAuthnLoginVerify(
     @Body() body: { username: string; webauthn: any },
     @Res() res: Response,
+    @Req() req: Request,
   ) {
     await this.authService.verifyLogin(body.username, body.webauthn);
+    const deviceDetector = new DeviceDetector();
+    const dev = deviceDetector.parse(req.headers['user-agent']);
 
     const user = await this.userService.getUser(body.username);
-    const userSession = await this.authService.createSessionForUser(user);
+    const userSession = await this.authService.createSessionForUser(
+      user,
+      `${dev.os.name} - ${dev.client.name} (${dev.device.type})`,
+    );
 
     if (isError(userSession)) {
       throw new HttpException(userSession, HttpStatus.FORBIDDEN);
@@ -138,8 +159,8 @@ export class AuthController {
     });
     res.setHeader('x-api-token', `Bearer ${userSession.accessToken}`);
 
-    res.json({
-      me: instanceToPlain(
+    res.json(
+      instanceToPlain(
         new UsersLoggedResponseDto({
           ...user,
           settings: new UsersLoggedSetttingsResponseDto({
@@ -154,7 +175,7 @@ export class AuthController {
           }),
         }),
       ),
-    });
+    );
     res.end();
   }
 
@@ -171,11 +192,18 @@ export class AuthController {
   async webAuthnRegVerify(
     @Body() body: { username: string; webauthn: any },
     @Res() res: Response,
+    @Req() req: Request,
   ) {
     await this.authService.verifyRegistration(body.username, body.webauthn);
 
     const user = await this.userService.getUser(body.username);
-    const userSession = await this.authService.createSessionForUser(user);
+    const deviceDetector = new DeviceDetector();
+    const dev = deviceDetector.parse(req.headers['user-agent']);
+
+    const userSession = await this.authService.createSessionForUser(
+      user,
+      `${dev.os.name} - ${dev.client.name} (${dev.device.type})`,
+    );
 
     if (isError(userSession)) {
       throw new HttpException(userSession, HttpStatus.FORBIDDEN);
@@ -188,8 +216,8 @@ export class AuthController {
     });
     res.setHeader('x-api-token', `Bearer ${userSession.accessToken}`);
 
-    res.json({
-      me: instanceToPlain(
+    res.json(
+      instanceToPlain(
         new UsersLoggedResponseDto({
           ...user,
           settings: new UsersLoggedSetttingsResponseDto({
@@ -200,7 +228,7 @@ export class AuthController {
           }),
         }),
       ),
-    });
+    );
     res.end();
   }
 
@@ -217,6 +245,7 @@ export class AuthController {
   async register(
     @Body() body: { username: string; password: string },
     @Res() res: Response,
+    @Req() req: Request,
   ) {
     const user = await this.userService.getUser(body.username);
 
@@ -230,18 +259,23 @@ export class AuthController {
       );
     }
 
-    const newUser = await this.userService.createUser({
+    const newUser: any = await this.userService.createUser({
       username: body.username,
       password: body.password,
       method: 'password',
+      role: UserRole.USER,
     });
 
     if (isError(newUser)) {
       throw new HttpException(newUser, HttpStatus.FORBIDDEN);
     }
 
+    const deviceDetector = new DeviceDetector();
+    const dev = deviceDetector.parse(req.headers['user-agent']);
+
     const userSession = await this.authService.createSessionForUser(
       newUser as any,
+      `${dev.os.name} - ${dev.client.name} (${dev.device.type})`,
     );
 
     if (isError(userSession)) {
@@ -258,10 +292,10 @@ export class AuthController {
     res.json({
       me: instanceToPlain(
         new UsersLoggedResponseDto({
-          ...user,
+          ...newUser,
           settings: new UsersLoggedSetttingsResponseDto({
-            ...user?.settings,
-            chats: user?.settings?.chats?.map(
+            ...newUser?.settings,
+            chats: newUser?.settings?.chats?.map(
               (chat) => new UsersLoggedSetttingsChannelResponseDto(chat),
             ),
           }),

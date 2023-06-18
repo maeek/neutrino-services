@@ -23,9 +23,11 @@ export class TokenSigningService {
     );
   }
 
-  async createRefreshToken() {
+  async createRefreshToken(device: string) {
     const refreshToken = await this.jwtService.signAsync(
-      {},
+      {
+        device,
+      },
       {
         algorithm: 'RS256',
         expiresIn: '90d',

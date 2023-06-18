@@ -1,10 +1,4 @@
-import {
-  IsBase64,
-  IsObject,
-  IsOptional,
-  IsString,
-  IsStrongPassword,
-} from 'class-validator';
+import { IsBase64, IsObject, IsOptional, IsString } from 'class-validator';
 
 enum UserRole {
   ADMIN = 'admin',
@@ -61,8 +55,11 @@ export class LoginRequestDto {
   @IsString()
   method: 'password' | 'webauthn';
 
+  @IsString()
+  device: string;
+
   @IsOptional()
-  @IsStrongPassword()
+  @IsString()
   password?: string;
 
   @IsOptional()

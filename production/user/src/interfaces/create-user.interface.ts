@@ -4,7 +4,6 @@ import {
   IsObject,
   IsOptional,
   IsString,
-  IsStrongPassword,
 } from 'class-validator';
 import { UserRole } from 'src/schemas/users.schema';
 
@@ -44,7 +43,7 @@ export class CreateUserRequestDto {
   method: 'password' | 'webauthn';
 
   @IsOptional()
-  @IsStrongPassword()
+  @IsString()
   password?: string;
 
   @IsOptional()

@@ -87,7 +87,7 @@ export class UserController {
       ...user,
       settings: new UsersLoggedSetttingsResponseDto({
         ...user.settings,
-        chats: user.settings.chats.map(
+        chats: user.settings?.chats?.map(
           (chat) => new UsersLoggedSetttingsChannelResponseDto(chat),
         ),
       }),
@@ -129,9 +129,15 @@ export class UserController {
   )
   @UseInterceptors(ClassSerializerInterceptor)
   @UseGuards(RegistrationGuard)
-  async createUser(@Body() body: CreateUserDto) {
+  async createUser(@Body() body: CreateUserDto, @Req() req: any) {
     try {
-      const user = await this.userService.createUser(body);
+      const loggedUser = req.user;
+
+      const user = await this.userService.createUser({
+        ...body,
+        role: loggedUser.role === UserRole.ADMIN ? body.role : UserRole.USER,
+        method: 'password',
+      });
 
       if (!user || isError(user)) {
         throw new Error('User not created');
@@ -187,7 +193,7 @@ export class UserController {
           ...user,
           settings: new UsersLoggedSetttingsResponseDto({
             ...user.settings,
-            chats: user.settings.chats.map(
+            chats: user.settings?.chats.map(
               (chat) => new UsersLoggedSetttingsChannelResponseDto(chat),
             ),
           }),
@@ -217,6 +223,7 @@ export class UserController {
     file: Express.Multer.File,
   ) {
     if (file) {
+      console.log(file);
       const user = await this.userService.getUser(params.id);
       const avatar = await this.fileService.saveAvatarFile(
         params.id,
@@ -242,7 +249,7 @@ export class UserController {
     @Res() res: Response,
     @Req() req,
   ) {
-    if (req.user.username !== params.id || req.user.role !== UserRole.ADMIN) {
+    if (req.user.username !== params.id && req.user.role === UserRole.USER) {
       res
         .status(HttpStatus.FORBIDDEN)
         .json({

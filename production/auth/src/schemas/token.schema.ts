@@ -31,7 +31,7 @@ export class Token {
   @Prop({ type: String, required: [true, '"username" cannot be empty'] })
   username: string;
 
-  @Prop({ type: Number, default: Date.now() })
+  @Prop({ type: Number, default: () => Date.now() })
   createdAt: number;
 }
 

@@ -20,7 +20,7 @@ export class AuthGuard implements CanActivate {
       accessToken,
     );
 
-    if (!jwtRes) {
+    if (!jwtRes || jwtRes.verified === false) {
       response.clearCookie('chat-session');
       return false;
     }

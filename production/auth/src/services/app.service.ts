@@ -33,15 +33,16 @@ export class AppService {
     username: string,
     method: 'password' | 'webauthn',
     passwordOrWebAuthn: string | WebAuthnRequestDto,
+    device: string,
   ) {
     if (method === 'password') {
-      return this.loginPassword(username, passwordOrWebAuthn as string);
+      return this.loginPassword(username, passwordOrWebAuthn as string, device);
     }
 
     throw new Error('Invalid login method');
   }
 
-  async loginPassword(username: string, password: string) {
+  async loginPassword(username: string, password: string, device: string) {
     const user = await firstValueFrom(
       this.userServiceClient
         .send(USER_MESSAGE_PATTERNS.GET_USER_WITH_PASSWORD, {
@@ -55,7 +56,7 @@ export class AppService {
       throw new Error('Invalid username or password');
     }
 
-    const refreshToken = await this.jwtService.createRefreshToken();
+    const refreshToken = await this.jwtService.createRefreshToken(device);
     const savedToken = await this.tokenRepository.create({
       username,
       refreshToken,
@@ -98,12 +99,12 @@ export class AppService {
             role: string;
             sessions: string[];
           }>(USER_MESSAGE_PATTERNS.GET_USER, {
-            id: token.username,
+            id: token?.username,
           })
           .pipe(timeout(5000)),
       );
 
-      if (!token || !user) {
+      if (!token || !user || !user.username) {
         throw new Error('Invalid session');
       }
 
@@ -133,13 +134,13 @@ export class AppService {
     }
   }
 
-  async createSession(user: any) {
+  async createSession(user: any, device: string) {
     try {
       if (!user) {
         throw new Error('Invalid username or password');
       }
 
-      const refreshToken = await this.jwtService.createRefreshToken();
+      const refreshToken = await this.jwtService.createRefreshToken(device);
       const savedToken = await this.tokenRepository.create({
         username: user.username,
         refreshToken,

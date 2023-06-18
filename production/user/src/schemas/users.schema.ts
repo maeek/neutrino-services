@@ -9,8 +9,8 @@ export enum UserRole {
 }
 
 export enum AccountLoginType {
-  STANDARD = 0,
-  WEBAUTHN = 1,
+  STANDARD = '0',
+  WEBAUTHN = '1',
 }
 
 const restrictedUsernames = ['server'];
@@ -61,7 +61,7 @@ export class User {
   })
   supportedLoginTypes: AccountLoginType[];
 
-  @Prop({ type: Number, default: Date.now() })
+  @Prop({ type: Number, default: () => Date.now() })
   createdAt: number;
 
   @Prop({

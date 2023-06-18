@@ -17,9 +17,8 @@ services:
       PGID: 1000
       TZ: Europe/Warsaw
       API_PORT: 8080
-      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
     env_file:
-      - ../.env
+      - .env
     depends_on:
       - rabbitmq
 
@@ -36,9 +35,8 @@ services:
       PUID: 1000
       PGID: 1000
       TZ: Europe/Warsaw
-      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
     env_file:
-      - ../.env
+      - .env
     depends_on:
       - rabbitmq
 
@@ -54,9 +52,8 @@ services:
       PUID: 1000
       PGID: 1000
       TZ: Europe/Warsaw
-      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
     env_file:
-      - ../.env
+      - .env
     depends_on:
       - rabbitmq
 
@@ -73,11 +70,10 @@ services:
       PGID: 1000
       TZ: Europe/Warsaw
       API_PORT: 8081
-      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
     ports:
       - "8081:8081"
     env_file:
-      - ../.env
+      - .env
     depends_on:
       - rabbitmq
 
@@ -94,9 +90,8 @@ services:
       PUID: 1000
       PGID: 1000
       TZ: Europe/Warsaw
-      RABBITMQ_URL: amqp://test:test@rabbitmq:5672
     env_file:
-      - ../.env
+      - .env
     depends_on:
       - rabbitmq
 
@@ -107,8 +102,6 @@ services:
     hostname: rabbitmq
     user: 0:0
     environment:
-      RABBITMQ_USER: 'test'
-      RABBITMQ_PASSWORD: 'test'
       TZ: Europe/Warsaw
     ports:
       - "5672:5672" # AMQP
@@ -119,13 +112,13 @@ services:
       - ../data/broker/logs:/var/log/rabbitmq:rw
       - ../data/broker/data:/var/lib/rabbitmq:rw
     env_file:
-      - ../.env
+      - .env
 
   redis:
     image: redis
     hostname: redis
     env_file:
-      - ../.env
+      - .env
 
   db:
     build:
@@ -144,6 +137,6 @@ services:
       - ../production/database/init/:/docker-entrypoint-initdb.d/
       - ../data/database:/data/db
     env_file:
-      - ../.env
+      - .env
     ports:
       - 27017:27017

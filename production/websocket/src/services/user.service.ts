@@ -28,7 +28,6 @@ export class UserService {
 
   async getUsersObjectIdsByIds(ids: string[]) {
     const users = await this.getUsersByIds(ids);
-    console.log(users);
     return users.map((user) => user.id);
   }
 }

@@ -18,6 +18,7 @@ enum MESSAGE_PATTERNS {
   GET_LOGGED_USER = 'user.getLoggedUser',
   REMOVE_USER = 'user.removeUser',
   SET_SESSION_TO_USER = 'user.setSessionToUser',
+  GET_USERS_BY_OBJECT_IDS = 'user.getUsersByObjectIds',
 }
 
 @Injectable()
@@ -217,6 +218,26 @@ export class UserService {
       }
 
       return user;
+    } catch (error) {
+      this.logger.error(error);
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        error: error.message,
+      };
+    }
+  }
+
+  async getUsersByObjectIds(ids: string[]) {
+    try {
+      const users = await firstValueFrom(
+        this.userServiceClient
+          .send(MESSAGE_PATTERNS.GET_USERS_BY_OBJECT_IDS, {
+            ids,
+          })
+          .pipe(timeout(5000)),
+      );
+
+      return users;
     } catch (error) {
       this.logger.error(error);
       return {

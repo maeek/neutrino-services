@@ -21,6 +21,7 @@ enum MESSAGE_PATTERNS {
   REMOVE_SESSION_FROM_USER = 'user.removeSessionFromUser',
   UPDATE_USER = 'user.updateUser',
   GET_USERS_BY_IDS = 'user.getUsersByIds',
+  GET_USERS_BY_OBJECT_IDS = 'user.getUsersByObjectIds',
   CREATE_USER_FROM_WEBAUTHN = 'user.createUserFromWebAuthn',
   CHECK_IF_CREDENTIAL_ID_EXISTS = 'user.checkIfCredentialIdExists',
 }
@@ -48,6 +49,7 @@ export class AppController {
 
       return user;
     } catch (error) {
+      console.log(error);
       return {
         statusCode: HttpStatus.FORBIDDEN,
         error: error.message,
@@ -58,6 +60,11 @@ export class AppController {
   @MessagePattern(MESSAGE_PATTERNS.GET_USERS)
   async getUsers(@Body() body: any) {
     return this.appService.getUsers(body.offset, body.limit, body.find);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.GET_USERS_BY_OBJECT_IDS)
+  async getUsersByObjIds(@Body() body: any) {
+    return this.appService.getUsersByObjectIds(body.ids);
   }
 
   @MessagePattern(MESSAGE_PATTERNS.GET_USER)

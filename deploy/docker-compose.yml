@@ -102,8 +102,6 @@ services:
     hostname: rabbitmq
     user: 0:0
     environment:
-      RABBITMQ_USER: 'test'
-      RABBITMQ_PASSWORD: 'test'
       TZ: Europe/Warsaw
     ports:
       - "5672:5672" # AMQP

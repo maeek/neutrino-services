@@ -5,7 +5,6 @@ import {
   IsObject,
   IsOptional,
   IsString,
-  IsStrongPassword,
 } from 'class-validator';
 import { IsOneOf } from './validators/isOneOf';
 import { Exclude } from 'class-transformer';
@@ -26,7 +25,7 @@ export class CreateUserDto {
   method?: 'password' | 'webauthn';
 
   @ApiProperty()
-  @IsStrongPassword()
+  @IsString()
   password?: string;
 
   @ApiProperty()
@@ -150,7 +149,13 @@ export class UpdateUserRequestDto {
 
   @ApiProperty()
   @IsString()
+  @IsOptional()
   description?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  avatar?: string;
 
   @ApiProperty()
   @IsString({ each: true })

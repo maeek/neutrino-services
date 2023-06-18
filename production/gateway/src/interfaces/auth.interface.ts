@@ -1,11 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsBase64,
-  IsObject,
-  IsOptional,
-  IsString,
-  IsStrongPassword,
-} from 'class-validator';
+import { IsBase64, IsObject, IsOptional, IsString } from 'class-validator';
 import { UsersResponseDto } from './user.interface';
 import { Exclude } from 'class-transformer';
 
@@ -56,7 +50,7 @@ export class LoginRequestDto {
 
   @ApiProperty()
   @IsOptional()
-  @IsStrongPassword()
+  @IsString()
   password?: string;
 
   @ApiProperty()

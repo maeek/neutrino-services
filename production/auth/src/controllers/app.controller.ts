@@ -1,4 +1,10 @@
-import { Body, Controller, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Req,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { AppService } from '../services/app.service';
 import { LoginRequestDto } from 'src/interfaces/login.interface';
@@ -6,6 +12,7 @@ import { LogoutRequestDto } from 'src/interfaces/logout.interface';
 import { GetSessionAndRenewRequestDto } from 'src/interfaces/get-session.interface';
 import { GetSessionsRequestDto } from 'src/interfaces/get-sessions.interface';
 import { WebAuthnService } from 'src/services/webauthn.service';
+import { Request } from 'express';
 
 enum MESSAGE_PATTERNS {
   GET_HEALTH = 'auth.getHealth',
@@ -46,6 +53,7 @@ export class AppController {
         body.username,
         body.method,
         body.method === 'password' ? body.password : body.webauthn,
+        body.device,
       );
 
       return loggedIn;
@@ -85,7 +93,15 @@ export class AppController {
   @MessagePattern(MESSAGE_PATTERNS.GET_SESSIONS)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async getSessions(@Body() body: GetSessionsRequestDto) {
-    return this.appService.getSessions(body.username);
+    const sessions = await this.appService.getSessions(body.username);
+
+    return sessions.map((ses) => ({
+      ...ses.toJSON(),
+      // decode base64 json and parse
+      device: JSON.parse(
+        Buffer.from(ses.refreshToken.split('.')[1], 'base64').toString('utf-8'),
+      ).device,
+    }));
   }
 
   @MessagePattern(MESSAGE_PATTERNS.LOGOUT)
@@ -118,21 +134,6 @@ export class AppController {
   @MessagePattern(MESSAGE_PATTERNS.CREATE_SESSION)
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async createSession(@Body() body: any) {
-    return this.appService.createSession(body.user);
+    return this.appService.createSession(body.user, body.device);
   }
-
-  // @MessagePattern(MESSAGE_PATTERNS.CREATE_WEBAUTHN_OPTIONS)
-  // async createWebAuthnOptions() {
-  //   return this.appService.createWebAuthnOptions();
-  // }
-
-  // @MessagePattern(MESSAGE_PATTERNS.GET_CHALLENGE)
-  // async getChallenge() {
-  //   return this.appService.getChallenge();
-  // }
-
-  // @MessagePattern(MESSAGE_PATTERNS.SOLVE_CHALLENGE)
-  // async solveChallenge() {
-  //   return this.appService.solveChallenge();
-  // }
 }

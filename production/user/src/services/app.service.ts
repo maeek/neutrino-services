@@ -68,6 +68,16 @@ export class AppService implements OnModuleInit {
     };
   }
 
+  async getUsersByObjectIds(ids: string[]) {
+    const users = await this.usersRepository.find({
+      _id: {
+        $in: ids,
+      },
+    });
+
+    return users;
+  }
+
   async getUser(username: string): Promise<UserDocument> {
     return this.usersRepository.findOne({ username });
   }
@@ -158,11 +168,7 @@ export class AppService implements OnModuleInit {
     try {
       const user = await this.getUser(username);
 
-      if (
-        !user ||
-        !user.supportedLoginTypes.includes(AccountLoginType.STANDARD) ||
-        !user.hash
-      ) {
+      if (!user || !user.hash) {
         throw new Error('Invalid username or password');
       }
 
@@ -240,11 +246,24 @@ export class AppService implements OnModuleInit {
     const user = await this.getUser(username);
 
     if (body.mutedUsers) {
+      if (!user.settings) {
+        user.settings = {
+          mutedUsers: [],
+          chats: [],
+        };
+      }
       user.settings.mutedUsers = body.mutedUsers;
       user.markModified('settings');
     }
 
     if (body.mutedChannels) {
+      if (!user.settings) {
+        user.settings = {
+          mutedUsers: [],
+          chats: [],
+        };
+      }
+
       user.settings.chats = body.mutedChannels.map((channel) => ({
         channel,
         muted: true,
@@ -253,10 +272,12 @@ export class AppService implements OnModuleInit {
       user.markModified('settings');
     }
 
-    user.description = body.description;
-    user.markModified('description');
+    if (body.description !== undefined) {
+      user.description = body.description;
+      user.markModified('description');
+    }
 
-    if (body.updateAvatar) {
+    if (body.updateAvatar || body.avatar === '') {
       user.avatar = body.avatar;
       user.markModified('avatar');
     }

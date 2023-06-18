@@ -29,7 +29,7 @@ export class Channel {
   })
   readonly name: string;
 
-  @Prop({ type: Number, default: Date.now() })
+  @Prop({ type: Number, default: () => Date.now() })
   createdAt: number;
 
   @Prop({ type: Boolean })
