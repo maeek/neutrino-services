@@ -1,25 +1,25 @@
-# Internetowy komunikator
+# Chat-app
 
-## ![LIVE DEMO](https://chat.suchanecki.me)
+This is a backed for chat api written in nestjs and socket-io
 
-# Instalacja
+## Installation
 
-Aby uruchomić aplikacje lokalnie wymagane jest środowisko Docker oraz Docker Compose.
+To run the app locally you'll need Docker and Docker Compose.
 
-# Uruchomienie
+## Running the app
 
-Przed pierwszym uruchomieniem, należy skonfigurować plik `.env`. W tym celu należy skopiować plik .env.example do .env i wypełnić go odpowiednimi danymi.
+Before first run, you'll need to configure `.env` file. Please copy `.env.example` file and fill it with your data.
 
-Aby uruchomić aplikacje należy wykonać poniższe polecenia w głównym katalogu projektu:
+To run the app you need to run following commands in project's root directory:
 
 ```bash
 make install
 make up
 ```
 
-Aplikacja zostanie uruchomiona na porcie 80. ![http://localhost](http://localhost).
+The app will run at port 80 ![http://localhost](http://localhost).
 
-Aby wyłączyć aplikacje należy uruchomić:
+To stop the app run:
 
 ```bash
 make down
